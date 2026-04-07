@@ -176,7 +176,7 @@ body {
 
 .btn-primary:active { transform: translateY(0); }
 
-.cs50-note {
+.course-note {
   margin-top: 2rem;
   padding: 12px 16px;
   background: var(--bg3);
@@ -189,8 +189,6 @@ body {
   animation: fadeUp 0.6s ease forwards 1s;
 }
 
-.cs50-note a { color: var(--blue); text-decoration: none; }
-.cs50-note a:hover { text-decoration: underline; }
 
 /* ── NAV ── */
 .site-nav {

@@ -17,9 +17,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Think Like a Programmer -- Beginner Coding Course",
+  title: "Think Like a Programmer -- 6-Week Coding Course",
   description:
-    "A beginner-friendly guide to six weeks of building, experimenting, and learning to code.",
+    "A welcoming guide to six weeks of building, experimenting, and learning to code.",
 };
 
 export default function RootLayout({

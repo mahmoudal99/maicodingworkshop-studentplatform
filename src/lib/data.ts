@@ -59,7 +59,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   { term: "RAM", week: "W1", def: "The computer's short-term memory. It keeps track of what you are using right now, like a desk where you spread out the work you're doing.", example: "If you open lots of tabs and apps, they all use RAM while they are open." },
   { term: "Input \u2192 Process \u2192 Output", week: "W1", def: "A simple way to describe what computers do: you give something in, the computer works on it, and then you get a result back.", example: "You type a password (input), the computer checks it (process), and tells you if you can log in (output)." },
   { term: "Pseudocode", week: "W2", def: "Writing your program idea in plain English before writing real code. It is like planning your route before you start driving.", example: "IF it is raining\n  take an umbrella\nELSE\n  wear sunglasses" },
-  { term: "Scratch", week: "W2", def: "A beginner-friendly coding tool where you build programs by snapping blocks together instead of typing lots of symbols.", example: "In Scratch, you can make a character move or talk by dragging blocks into place." },
+  { term: "Scratch", week: "W2", def: "A coding tool where you build programs by snapping blocks together instead of typing lots of symbols.", example: "In Scratch, you can make a character move or talk by dragging blocks into place." },
   { term: "Variable", week: "W3", def: "A named box that stores information. You can put a value in it, read it later, and sometimes change it.", example: "A variable called `score` might start at 0 and go up every time you answer correctly." },
   { term: "let / const", week: "W3", def: "`let` is for a value that can change. `const` is for a value that should stay the same after you set it.", example: "`let score = 0` can change later, but `const name = 'Aisha'` is meant to stay the same." },
   { term: "console.log()", week: "W3", def: "A way to print a message into the browser console so you can see what your code is doing. It is like asking your code to talk back to you.", example: "If you write `console.log(score)`, you can check what `score` is right now." },
@@ -77,7 +77,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   { term: "JavaScript (JS)", week: "W3", def: "The language that makes websites interactive. It lets pages respond to clicks, typing, timers, and more.", example: "If a button opens a menu or updates a score, JavaScript is usually involved." },
   { term: "Event Listener", week: "W4/W5", def: "Code that waits for something to happen, like a click or key press, and then reacts to it.", example: "A button can 'listen' for a click and then show a hidden message." },
   { term: "Deployment", week: "W5", def: "Putting your project online so other people can visit it with a link.", example: "A project on your laptop is private; a deployed project has a live URL you can share." },
-  { term: "Netlify", week: "W5", def: "A tool that helps you put websites online easily. It is beginner-friendly because you can often publish by dragging in your project folder.", example: "Netlify Drop lets you drag your site in and get a live link back." },
+  { term: "Netlify", week: "W5", def: "A tool that helps you put websites online easily. You can often publish by dragging in your project folder.", example: "Netlify Drop lets you drag your site in and get a live link back." },
   { term: "LLM", week: "W5", def: "Short for Large Language Model. It is an AI system trained on lots of text so it can generate writing, answer questions, and even suggest code.", example: "When you ask an AI chatbot for code and it writes some for you, it is using an LLM." },
   { term: "Prompt Engineering", week: "W5", def: "Writing clear instructions for an AI so it gives you more useful results. Better questions usually lead to better answers.", example: "Instead of saying 'make a page', you might say 'make a blue webpage with a heading, a button, and a score counter'." },
   { term: "Debugging", week: "W2\u2013W5", def: "Finding out why your code is not working and fixing it. It is basically detective work for programmers.", example: "You read the error, test one idea, change the code, and see if the problem is gone." },
@@ -97,7 +97,7 @@ export const WEEKS_A: WeekData[] = [
       {
         icon: "\u26a1", title: "Activities",
         items: [
-          "Binary bulbs (CS50-style): count in binary using raised hands or cards. 5 people = 5 bits = up to 32 values. Race to represent numbers. Makes binary click in under 10 minutes.",
+          "Binary bulbs activity: count in binary using raised hands or cards. 5 people = 5 bits = up to 32 values. Race to represent numbers. Makes binary click in under 10 minutes.",
           "Computer components tour: open Task Manager or Activity Monitor and connect CPU, RAM, and storage to Input \u2192 Process \u2192 Output.",
           "Sketch your website idea on paper \u2014 what pages will it have, what will it show, and what should someone be able to do on it?"
         ]
@@ -118,10 +118,7 @@ export const WEEKS_A: WeekData[] = [
       "Can describe Input \u2192 Process \u2192 Output",
       "Has picked a project idea and made a rough sketch"
     ],
-    links: [
-      { label: "CS50 Week 0 \u2014 watch free", url: "https://cs50.harvard.edu/x/2024/weeks/0/", icon: "\u25b6" },
-      { label: "CS50 course on edX", url: "https://pll.harvard.edu/course/cs50-introduction-computer-science", icon: "\ud83c\udf93" },
-    ],
+    links: [],
     note: "Don't worry about memorising everything yet. If the binary activity starts to feel like a game, you're learning exactly what you need to.",
     diff: {
       ahead: ["Try to represent your age in binary without help", "Research how much RAM common devices have", "Sketch two different versions of your project idea"],
@@ -164,7 +161,6 @@ export const WEEKS_A: WeekData[] = [
     ],
     links: [
       { label: "Scratch \u2014 build for free", url: "https://scratch.mit.edu", icon: "\ud83d\udc31" },
-      { label: "CS50 Scratch problem set", url: "https://cs50.harvard.edu/x/2024/psets/0/scratch/", icon: "\ud83d\udcdd" },
     ],
     note: "Scratch is here to make coding feel approachable. You can focus on the logic without worrying about spelling every line perfectly.",
     diff: {
@@ -364,7 +360,6 @@ export const WEEKS_A: WeekData[] = [
     ],
     links: [
       { label: "Netlify Drop \u2014 deploy instantly", url: "https://app.netlify.com/drop", icon: "\ud83d\ude80" },
-      { label: "CS50x \u2014 free on edX, continue learning", url: "https://pll.harvard.edu/course/cs50-introduction-computer-science", icon: "\ud83c\udf93" },
     ],
     note: "Your demo does not need to be perfect. If you can show something real and explain one part of it, that's a big win.",
     diff: {
@@ -612,7 +607,6 @@ export const WEEKS_B: WeekData[] = [
     ],
     links: [
       { label: "Netlify Drop", url: "https://app.netlify.com/drop", icon: "\ud83d\ude80" },
-      { label: "CS50x \u2014 continue learning", url: "https://pll.harvard.edu/course/cs50-introduction-computer-science", icon: "\ud83c\udf93" },
     ],
     note: "You do not need a perfect project for this to count. If you built something real and can talk about it, you've done something impressive.",
     diff: {
@@ -623,7 +617,6 @@ export const WEEKS_B: WeekData[] = [
 ];
 
 export const RESOURCES: ResourceData[] = [
-  { icon: "\ud83c\udf93", title: "CS50x \u2014 Harvard on edX", desc: "The course that inspired this workshop. World-class, completely free. Challenging and rewarding.", tag: "Free \u00b7 Self-paced", url: "https://pll.harvard.edu/course/cs50-introduction-computer-science" },
   { icon: "\u2692\ufe0f", title: "The Odin Project", desc: "Full-stack web development curriculum. Self-paced, project-based, completely free.", tag: "Free \u00b7 Web dev path", url: "https://www.theodinproject.com" },
   { icon: "\ud83d\udcbb", title: "freeCodeCamp", desc: "Hundreds of hours of structured JavaScript challenges. Free certificate on completion.", tag: "Free \u00b7 JavaScript & web", url: "https://www.freecodecamp.org" },
   { icon: "\ud83d\udcd6", title: "MDN Web Docs", desc: "Mozilla's reference for HTML, CSS, and JavaScript. The most reliable docs on the web.", tag: "Free \u00b7 Reference", url: "https://developer.mozilla.org" },
