@@ -13,7 +13,7 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 export default function DashboardPage() {
   const router = useRouter();
   const { userName, versionKey, loaded } = useUser();
-  const { xp, getOverallProgress } = useProgress();
+  const { xp, getOverallProgress, getWeekProgress } = useProgress();
   const [typedName, setTypedName] = useState("");
   const [progressWidth, setProgressWidth] = useState("0%");
   const typingDone = useRef(false);
@@ -96,11 +96,16 @@ export default function DashboardPage() {
 
         <div className="section-label">{"// Your weeks"}</div>
         <div className="week-grid">
-          {weeks.map((w, i) => (
-            <RevealOnScroll key={i} delay={i * 0.07}>
-              <WeekCard week={w} index={i} />
-            </RevealOnScroll>
-          ))}
+          {weeks.map((w, i) => {
+            const isLocked =
+              i > 0 &&
+              getWeekProgress(versionKey, i - 1).percent < 100;
+            return (
+              <RevealOnScroll key={i} delay={i * 0.07}>
+                <WeekCard week={w} index={i} locked={isLocked} />
+              </RevealOnScroll>
+            );
+          })}
         </div>
 
         <div className="section-label">{"// Quick links"}</div>

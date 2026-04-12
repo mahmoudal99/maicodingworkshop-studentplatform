@@ -9,6 +9,7 @@ import { WEEKS_A, WEEKS_B, GLOSSARY } from "@/lib/data";
 import type { GlossaryEntry } from "@/lib/data";
 import Navbar from "@/components/Navbar";
 import Accordion from "@/components/Accordion";
+import LevelPath from "@/components/LevelPath";
 import BinaryWidget from "@/components/BinaryWidget";
 import GlossaryModal from "@/components/GlossaryModal";
 import WeekSvg from "@/components/WeekSvg";
@@ -138,13 +139,19 @@ export default function WeekDetailPage() {
   const weeks = versionKey === "A" ? WEEKS_A : WEEKS_B;
   const week = weeks[id];
 
+  const prevComplete =
+    id === 0 || getWeekProgress(versionKey, id - 1).percent === 100;
+
   useEffect(() => {
     if (loaded && !userName) {
       router.replace("/");
     }
-  }, [userName, loaded, router]);
+    if (loaded && userName && !prevComplete) {
+      router.replace("/dashboard");
+    }
+  }, [userName, loaded, prevComplete, router]);
 
-  if (!loaded || !userName || !week) return null;
+  if (!loaded || !userName || !week || !prevComplete) return null;
 
   const weekProgress = getWeekProgress(versionKey, id);
   const isWeekComplete = weekProgress.total > 0 && weekProgress.percent === 100;
@@ -209,61 +216,41 @@ export default function WeekDetailPage() {
           />
         </div>
 
-        {/* Detail grid */}
+        {/* Overview */}
+        <RevealOnScroll>
+          <Accordion title="Overview" icon={"\uD83D\uDCCC"} defaultOpen>
+            <p
+              style={{
+                fontSize: "14px",
+                color: "var(--muted2)",
+                paddingTop: "1rem",
+                lineHeight: "1.7",
+              }}
+            >
+              {week.overview}
+            </p>
+          </Accordion>
+        </RevealOnScroll>
+
+        {/* Duolingo-style level path — full width */}
+        <RevealOnScroll>
+          <LevelPath
+            sections={week.sections}
+            weekIndex={id}
+            accent={week.accent}
+          />
+        </RevealOnScroll>
+
+        {/* Binary widget */}
+        {hasBinary && (
+          <RevealOnScroll>
+            <BinaryWidget />
+          </RevealOnScroll>
+        )}
+
+        {/* Info cards row */}
         <div className="detail-grid">
           <div>
-            {/* Overview accordion */}
-            <RevealOnScroll>
-              <Accordion title="Overview" icon={"\uD83D\uDCCC"} defaultOpen>
-                <p
-                  style={{
-                    fontSize: "14px",
-                    color: "var(--muted2)",
-                    paddingTop: "1rem",
-                    lineHeight: "1.7",
-                  }}
-                >
-                  {week.overview}
-                </p>
-              </Accordion>
-            </RevealOnScroll>
-
-            {/* Section accordions */}
-            {week.sections.map((s, idx) => (
-              <RevealOnScroll key={idx} delay={idx * 0.08}>
-                <Accordion
-                  title={s.title}
-                  icon={s.icon}
-                  defaultOpen
-                  headerExtra={
-                    <SectionProgress
-                      versionKey={versionKey}
-                      weekIndex={id}
-                      sectionIndex={idx}
-                      total={s.items.length}
-                    />
-                  }
-                >
-                  <ul className="activity-list">
-                    {s.items.map((item, j) => (
-                      <ActivityItem
-                        key={j}
-                        item={item}
-                        itemKey={`${versionKey}-${id}-${idx}-${j}`}
-                      />
-                    ))}
-                  </ul>
-                </Accordion>
-              </RevealOnScroll>
-            ))}
-
-            {/* Binary widget */}
-            {hasBinary && (
-              <RevealOnScroll>
-                <BinaryWidget />
-              </RevealOnScroll>
-            )}
-
             {/* Pacing accordion */}
             <RevealOnScroll>
               <Accordion title="Pacing & differentiation" icon={"\u2696\uFE0F"}>

@@ -8,6 +8,7 @@ import { useProgress } from "@/lib/progress";
 interface Props {
   week: WeekData;
   index: number;
+  locked?: boolean;
 }
 
 function ProgressRing({
@@ -77,10 +78,30 @@ function ProgressRing({
   );
 }
 
-export default function WeekCard({ week, index }: Props) {
+export default function WeekCard({ week, index, locked }: Props) {
   const { versionKey } = useUser();
   const { getWeekProgress } = useProgress();
   const { percent } = getWeekProgress(versionKey, index);
+
+  if (locked) {
+    return (
+      <div
+        className="week-card week-card-locked"
+        style={
+          {
+            "--card-accent": "var(--muted2)",
+          } as React.CSSProperties
+        }
+      >
+        <div className="lock-icon">{"\uD83D\uDD12"}</div>
+        <div className="week-num" style={{ color: "var(--muted2)" }}>
+          {week.label}
+        </div>
+        <h3>{week.title}</h3>
+        <p className="locked-hint">Complete the previous week to unlock</p>
+      </div>
+    );
+  }
 
   return (
     <Link
