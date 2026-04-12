@@ -14,14 +14,14 @@ const WEEK_FILTERS = ["All", "W1", "W2", "W3", "W4", "W5", "W6"];
 
 export default function GlossaryPage() {
   const router = useRouter();
-  const { userName } = useUser();
+  const { userName, loaded } = useUser();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [modalTerm, setModalTerm] = useState<GlossaryEntry | null>(null);
 
   useEffect(() => {
-    if (!userName) router.replace("/");
-  }, [userName, router]);
+    if (loaded && !userName) router.replace("/");
+  }, [userName, loaded, router]);
 
   const filtered = useMemo(() => {
     return GLOSSARY.filter((g) => {
@@ -35,7 +35,7 @@ export default function GlossaryPage() {
     });
   }, [search, activeFilter]);
 
-  if (!userName) return null;
+  if (!loaded || !userName) return null;
 
   return (
     <>

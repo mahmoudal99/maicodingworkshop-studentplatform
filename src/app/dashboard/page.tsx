@@ -12,7 +12,7 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { userName, versionKey } = useUser();
+  const { userName, versionKey, loaded } = useUser();
   const { xp, getOverallProgress } = useProgress();
   const [typedName, setTypedName] = useState("");
   const [progressWidth, setProgressWidth] = useState("0%");
@@ -26,6 +26,7 @@ export default function DashboardPage() {
       : "Version B \u2014 fast-start path";
 
   useEffect(() => {
+    if (!loaded) return;
     if (!userName) {
       router.replace("/");
       return;
@@ -47,7 +48,7 @@ export default function DashboardPage() {
       }, 70);
       return () => clearInterval(timer);
     }
-  }, [userName, router]);
+  }, [userName, loaded, router]);
 
   // Animate progress bar
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function DashboardPage() {
     return () => clearTimeout(t);
   }, [overall.percent]);
 
-  if (!userName) return null;
+  if (!loaded || !userName) return null;
 
   return (
     <>

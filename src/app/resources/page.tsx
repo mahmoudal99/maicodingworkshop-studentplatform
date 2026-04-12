@@ -10,13 +10,13 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 
 export default function ResourcesPage() {
   const router = useRouter();
-  const { userName } = useUser();
+  const { userName, loaded } = useUser();
 
   useEffect(() => {
-    if (!userName) router.replace("/");
-  }, [userName, router]);
+    if (loaded && !userName) router.replace("/");
+  }, [userName, loaded, router]);
 
-  if (!userName) return null;
+  if (!loaded || !userName) return null;
 
   return (
     <>

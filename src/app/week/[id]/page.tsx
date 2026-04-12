@@ -130,7 +130,7 @@ function SectionProgress({
 export default function WeekDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { userName, versionKey } = useUser();
+  const { userName, versionKey, loaded } = useUser();
   const { getWeekProgress } = useProgress();
   const [modalTerm, setModalTerm] = useState<GlossaryEntry | null>(null);
 
@@ -139,12 +139,12 @@ export default function WeekDetailPage() {
   const week = weeks[id];
 
   useEffect(() => {
-    if (!userName) {
+    if (loaded && !userName) {
       router.replace("/");
     }
-  }, [userName, router]);
+  }, [userName, loaded, router]);
 
-  if (!userName || !week) return null;
+  if (!loaded || !userName || !week) return null;
 
   const weekProgress = getWeekProgress(versionKey, id);
   const isWeekComplete = weekProgress.total > 0 && weekProgress.percent === 100;
