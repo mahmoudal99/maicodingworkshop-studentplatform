@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Mono, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "@/lib/store";
+import { ProgressProvider } from "@/lib/progress";
 import ParticleCanvas from "@/components/ParticleCanvas";
 
 const spaceMono = Space_Mono({
@@ -31,8 +32,10 @@ export default function RootLayout({
     <html lang="en" className={`${spaceMono.variable} ${dmSans.variable}`}>
       <body>
         <UserProvider>
-          <ParticleCanvas />
-          {children}
+          <ProgressProvider>
+            <ParticleCanvas />
+            {children}
+          </ProgressProvider>
         </UserProvider>
       </body>
     </html>

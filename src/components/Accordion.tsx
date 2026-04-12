@@ -7,6 +7,7 @@ interface Props {
   icon: string;
   children: ReactNode;
   defaultOpen?: boolean;
+  headerExtra?: ReactNode;
 }
 
 export default function Accordion({
@@ -14,6 +15,7 @@ export default function Accordion({
   icon,
   children,
   defaultOpen = false,
+  headerExtra,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
 
@@ -23,6 +25,14 @@ export default function Accordion({
         <div className="accordion-header-left">
           <div className="accordion-icon">{icon}</div>
           <span className="accordion-title">{title}</span>
+          {headerExtra && (
+            <div
+              className="accordion-header-extra"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {headerExtra}
+            </div>
+          )}
         </div>
         <span className="accordion-chevron">{"\u25BC"}</span>
       </div>

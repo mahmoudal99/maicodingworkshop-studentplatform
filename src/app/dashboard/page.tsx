@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/lib/store";
+import { useProgress } from "@/lib/progress";
 import { WEEKS_A, WEEKS_B } from "@/lib/data";
 import Navbar from "@/components/Navbar";
 import WeekCard from "@/components/WeekCard";
@@ -12,15 +13,17 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 export default function DashboardPage() {
   const router = useRouter();
   const { userName, versionKey } = useUser();
+  const { xp, getOverallProgress } = useProgress();
   const [typedName, setTypedName] = useState("");
   const [progressWidth, setProgressWidth] = useState("0%");
   const typingDone = useRef(false);
 
   const weeks = versionKey === "A" ? WEEKS_A : WEEKS_B;
+  const overall = getOverallProgress(versionKey);
   const versionLabel =
     versionKey === "A"
-      ? "Version A \u2014 CS50-inspired"
-      : "Version B \u2014 Salah's structure";
+      ? "Version A \u2014 foundations path"
+      : "Version B \u2014 fast-start path";
 
   useEffect(() => {
     if (!userName) {
@@ -48,9 +51,9 @@ export default function DashboardPage() {
 
   // Animate progress bar
   useEffect(() => {
-    const t = setTimeout(() => setProgressWidth("16.7%"), 200);
+    const t = setTimeout(() => setProgressWidth(`${overall.percent}%`), 200);
     return () => clearTimeout(t);
-  }, []);
+  }, [overall.percent]);
 
   if (!userName) return null;
 
@@ -72,9 +75,14 @@ export default function DashboardPage() {
             <span className="dot" />
             <span>{versionLabel}</span>
           </div>
+          <div className="stats-row">
+            <span className="stats-xp">{xp} XP earned</span>
+            <span className="stats-sep">{"\u00B7"}</span>
+            <span>{overall.done}/{overall.total} activities completed</span>
+          </div>
           <div className="progress-container">
             <div className="progress-label">
-              {"// Course progress \u2014 Week 1 of 6"}
+              {`// Course progress \u2014 Week ${overall.currentWeek} of ${weeks.length}`}
             </div>
             <div className="progress-track">
               <div
