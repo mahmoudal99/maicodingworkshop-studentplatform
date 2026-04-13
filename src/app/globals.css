@@ -2262,6 +2262,412 @@ body {
 
 .wfb-block-actions button:hover { color: var(--text); }
 
+/* ── Code Sorting Game ── */
+.csg-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted2);
+  text-align: center;
+}
+.csg-title strong { color: var(--fg); }
+
+.csg-placed {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.csg-placed-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border-left: 3px solid var(--green);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--fg);
+  animation: csg-slide-in 0.3s ease-out;
+}
+
+@keyframes csg-slide-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.csg-step-num {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted2);
+  flex-shrink: 0;
+}
+
+.csg-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px dashed rgba(255,255,255,0.15);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--muted2);
+}
+
+.csg-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.csg-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.csg-choice-btn {
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--fg);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.csg-choice-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+}
+
+.csg-done {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.csg-done-icon { font-size: 48px; }
+.csg-done h3 { font-family: var(--heading); font-size: 22px; color: var(--fg); }
+.csg-done p  { color: var(--muted2); max-width: 400px; line-height: 1.6; }
+
+.csg-finish-btn {
+  margin-top: 8px;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: #0a0e1a;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+}
+
+.csg-finish-btn:hover { filter: brightness(1.1); }
+
+/* ── Code Execution Chain Game ── */
+.cec-subtitle {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted2);
+  text-align: center;
+}
+
+.cec-placed {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 16px;
+}
+
+.cec-placed-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 360px;
+  animation: csg-slide-in 0.3s ease-out;
+}
+
+.cec-stage-icon { font-size: 22px; }
+
+.cec-stage-label {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--fg);
+}
+
+.cec-connector {
+  width: 2px;
+  height: 16px;
+  margin: 0 auto;
+  opacity: 0.4;
+}
+
+.cec-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border: 1px dashed rgba(255,255,255,0.15);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 360px;
+  margin-top: 16px;
+}
+
+.cec-placeholder .cec-stage-icon {
+  opacity: 0.3;
+}
+
+.cec-placeholder .cec-stage-label {
+  color: var(--muted2);
+}
+
+.cec-info-popup {
+  position: absolute;
+  right: -10px;
+  top: -30px;
+  background: rgba(0,0,0,0.85);
+  color: var(--muted2);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  animation: csg-slide-in 0.2s ease-out;
+  pointer-events: none;
+  max-width: 280px;
+  white-space: normal;
+}
+
+.cec-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.cec-choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--fg);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cec-choice-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+}
+
+.cec-choice-icon { font-size: 18px; }
+
+.cec-done {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.cec-chain-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.cec-chain-item { display: flex; align-items: center; gap: 4px; }
+.cec-chain-icon { font-size: 28px; }
+.cec-arrow { color: var(--muted2); font-size: 18px; }
+
+.cec-done h3 { font-family: var(--heading); font-size: 22px; color: var(--fg); }
+.cec-done p  { color: var(--muted2); max-width: 420px; line-height: 1.6; }
+
+.cec-finish-btn {
+  margin-top: 8px;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: #0a0e1a;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+}
+
+.cec-finish-btn:hover { filter: brightness(1.1); }
+
+/* ── Code Everywhere Quiz ── */
+.ceq-prompt {
+  font-family: var(--mono);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted2);
+  text-align: center;
+}
+
+.ceq-item-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 24px 32px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  min-width: 240px;
+}
+
+.ceq-item-icon { font-size: 36px; }
+
+.ceq-item-name {
+  font-family: var(--heading);
+  font-size: 20px;
+  color: var(--fg);
+}
+
+.ceq-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.ceq-btn {
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ceq-btn-yes {
+  background: rgba(52, 211, 153, 0.1);
+  border: 2px solid rgba(52, 211, 153, 0.4);
+  color: var(--green);
+}
+
+.ceq-btn-yes:hover {
+  background: rgba(52, 211, 153, 0.2);
+}
+
+.ceq-btn-no {
+  background: rgba(255,255,255,0.04);
+  border: 2px solid rgba(255,255,255,0.12);
+  color: var(--muted2);
+}
+
+.ceq-btn-no:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--fg);
+}
+
+.ceq-feedback {
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+  text-align: center;
+  max-width: 400px;
+  animation: csg-slide-in 0.3s ease-out;
+}
+
+.ceq-feedback p { margin-top: 6px; line-height: 1.5; }
+
+.ceq-correct {
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: var(--green);
+}
+
+.ceq-wrong {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: var(--coral);
+}
+
+.ceq-score-bar {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted2);
+}
+
+.ceq-done {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.ceq-score-display {
+  font-family: var(--heading);
+  font-size: 48px;
+  color: var(--green);
+}
+
+.ceq-done h3 { font-family: var(--heading); font-size: 22px; color: var(--fg); }
+.ceq-done p  { color: var(--muted2); max-width: 420px; line-height: 1.6; }
+
+.ceq-finish-btn {
+  margin-top: 8px;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: #0a0e1a;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+}
+
+.ceq-finish-btn:hover { filter: brightness(1.1); }
+
 /* ═══════════════════════════════════════════════════════════════
    GAMIFICATION / PROGRESS TRACKING
    ═══════════════════════════════════════════════════════════════ */

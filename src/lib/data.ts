@@ -55,6 +55,9 @@ export const GLOSSARY: GlossaryEntry[] = [
   { term: "Algorithm", week: "W1/W2", def: "A set of steps for solving a problem. Think of it like a recipe: if the steps are clear, someone else can follow them too.", example: "Making tea is an algorithm: boil water, add teabag, pour water, wait, then drink." },
   { term: "Binary", week: "W1", def: "The number system computers use. Instead of lots of symbols, it only uses 0 and 1, like a switch that can be off or on.", example: "The number 5 in binary is 101, which means 4 + 1." },
   { term: "Bit", week: "W1", def: "The smallest piece of computer data. A bit can only be 0 or 1, like a tiny light switch.", example: "If a bit is 0, think 'off'. If it is 1, think 'on'." },
+  { term: "Byte", week: "W1", def: "A group of 8 bits. Bytes are the standard unit for measuring data. One byte can represent a number from 0 to 255, or a single character.", example: "The letter 'A' is stored as one byte: 01000001 in binary." },
+  { term: "Coding", week: "W1", def: "Writing a set of instructions in a language a computer can understand. You write the steps; the computer follows them exactly — including your mistakes.", example: "When you type code like `alert('Hello')` and the browser shows a popup, that's coding in action." },
+  { term: "Programming Language", week: "W1", def: "A special language designed for giving instructions to computers. Examples include JavaScript, Python, and Scratch. Each has its own rules (syntax) but they all do the same job: tell the computer what to do.", example: "JavaScript is the programming language of the web — every browser can run it." },
   { term: "CPU", week: "W1", def: "The part of the computer that follows instructions and does the work. You can think of it as the computer's brain.", example: "When you click a button, the CPU helps process that click and decide what happens next." },
   { term: "RAM", week: "W1", def: "The computer's short-term memory. It keeps track of what you are using right now, like a desk where you spread out the work you're doing.", example: "If you open lots of tabs and apps, they all use RAM while they are open." },
   { term: "Input \u2192 Process \u2192 Output", week: "W1", def: "A simple way to describe what computers do: you give something in, the computer works on it, and then you get a result back.", example: "You type a password (input), the computer checks it (process), and tells you if you can log in (output)." },
@@ -90,39 +93,43 @@ export const WEEKS_A: WeekData[] = [
     title: "How Computers Think",
     sub: "Binary, computer parts, and the basics",
     accent: "#a78bfa",
-    tags: ["Binary", "CPU/RAM", "Algorithms", "Project idea"],
-    milestone: "Choose your project idea and sketch your first version on paper.",
+    tags: ["Binary", "CPU/RAM", "Coding", "How code runs"],
+    milestone: "Understand the chain from human language to binary and back.",
     overview: "This is your starting point. Before you write code, you'll build a simple mental model of how computers work so the rest of the course feels less mysterious.",
     sections: [
       {
         icon: "\u26a1", title: "Activities",
         items: [
-          "Binary bulbs activity: count in binary using raised hands or cards. 5 people = 5 bits = up to 32 values. Race to represent numbers. Makes binary click in under 10 minutes.",
-          "Computer components tour: open Task Manager or Activity Monitor and connect CPU, RAM, and storage to Input \u2192 Process \u2192 Output.",
-          "Sketch your website idea on paper \u2014 what pages will it have, what will it show, and what should someone be able to do on it?"
+          "Binary bulbs (CS50-style): count in binary using raised hands or cards. 5 people = 5 bits = up to 32 values. Race to represent numbers. Makes binary click in under 10 minutes.",
+          "Computer components tour: open a browser, open Task Manager or Activity Monitor, look at CPU, RAM, and storage. Map these to Input \u2192 Process \u2192 Output. Watch CPU spike when you open a heavy website. Discuss what each part does in plain English.",
+          "What is coding? Group discussion first \u2014 what do participants think coding is? Then explain: code is a set of instructions written in a language the computer understands. You write the steps; the computer follows them exactly \u2014 including your mistakes.",
+          "How does code run on a computer? Walk through the chain: you write JavaScript \u2192 the browser reads it \u2192 translates it to binary instructions \u2192 the CPU executes them \u2192 the result appears on screen. The bridge between human language and 0s and 1s.",
+          "How does coding relate to computers? Everything on a computer \u2014 every app, website, game \u2014 was written by someone in a programming language. The CPU in the components tour? It runs code. The browser? Code. Even the operating system is code."
         ]
       },
       {
         icon: "\ud83d\udca1", title: "Key Concepts",
         items: [
-          "Bits, bytes, and why binary exists",
-          "Input \u2192 Process \u2192 Output as a universal model",
-          "What CPU, RAM, and storage each do",
-          "Algorithms: precise instructions a machine can follow"
+          "Bits, bytes, and why binary exists \u2014 circuits are ON or OFF, so computers use 0s and 1s",
+          "Input \u2192 Process \u2192 Output as a universal model for all computing",
+          "What CPU, RAM, and storage each do \u2014 and how they work together",
+          "What coding is: writing precise instructions in a language a machine can follow",
+          "How code runs: human-readable language \u2192 translation \u2192 binary \u2192 CPU \u2192 output"
         ]
       }
     ],
-    keywords: ["Binary", "Bit", "CPU", "RAM", "Input \u2192 Process \u2192 Output", "Algorithm"],
+    keywords: ["Binary", "Bit", "Byte", "CPU", "RAM", "Input \u2192 Process \u2192 Output", "Coding", "Programming Language"],
     outcomes: [
       "Can explain what a bit and a byte are in their own words",
-      "Can describe Input \u2192 Process \u2192 Output",
-      "Has picked a project idea and made a rough sketch"
+      "Can name the main parts of a computer and what each one does",
+      "Understands Input \u2192 Process \u2192 Output",
+      "Can explain what coding is and how it connects to the hardware they just explored"
     ],
     links: [],
     note: "Don't worry about memorising everything yet. If the binary activity starts to feel like a game, you're learning exactly what you need to.",
     diff: {
-      ahead: ["Try to represent your age in binary without help", "Research how much RAM common devices have", "Sketch two different versions of your project idea"],
-      behind: ["Focus on the binary activity only \u2014 that's the core concept", "Keep your project idea simple and ask for help choosing a first version"]
+      ahead: ["Try to represent your age in binary without help", "Research how much RAM common devices have", "Trace the full path from typing a URL to seeing a web page"],
+      behind: ["Focus on the binary activity only \u2014 that's the core concept", "Don't stress about memorising the code-execution chain yet \u2014 it will make more sense once you start writing code"]
     }
   },
   {

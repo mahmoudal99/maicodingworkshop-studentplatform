@@ -8,7 +8,9 @@ import { WEEKS_A, WEEKS_B } from "@/lib/data";
 import { getGameId } from "@/lib/game-map";
 import BinaryCountingGame from "@/components/games/BinaryCountingGame";
 import ComponentMatchGame from "@/components/games/ComponentMatchGame";
-import WireframeBuilder from "@/components/games/WireframeBuilder";
+import CodeSortingGame from "@/components/games/CodeSortingGame";
+import CodeExecutionChainGame from "@/components/games/CodeExecutionChainGame";
+import CodeEverywhereQuiz from "@/components/games/CodeEverywhereQuiz";
 
 export default function LessonPage() {
   const params = useParams();
@@ -83,7 +85,9 @@ export default function LessonPage() {
   const GAME_COMPONENTS: Record<string, React.ComponentType<{ onComplete: () => void; accent: string }>> = {
     "binary-counting": BinaryCountingGame,
     "component-match": ComponentMatchGame,
-    "wireframe-builder": WireframeBuilder,
+    "code-sorting": CodeSortingGame,
+    "code-execution-chain": CodeExecutionChainGame,
+    "code-everywhere-quiz": CodeEverywhereQuiz,
   };
 
   const GameComponent = gameId ? GAME_COMPONENTS[gameId] : null;
