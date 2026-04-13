@@ -3,6 +3,7 @@ import { Space_Mono, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "@/lib/store";
 import { ProgressProvider } from "@/lib/progress";
+import { AdminUnlockProvider } from "@/lib/admin-unlock";
 import ParticleCanvas from "@/components/ParticleCanvas";
 
 const spaceMono = Space_Mono({
@@ -33,8 +34,10 @@ export default function RootLayout({
       <body>
         <UserProvider>
           <ProgressProvider>
-            <ParticleCanvas />
-            {children}
+            <AdminUnlockProvider>
+              <ParticleCanvas />
+              {children}
+            </AdminUnlockProvider>
           </ProgressProvider>
         </UserProvider>
       </body>

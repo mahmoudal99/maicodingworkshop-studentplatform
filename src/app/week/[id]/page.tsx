@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/lib/store";
 import { useProgress } from "@/lib/progress";
+import { useAdminUnlock } from "@/lib/admin-unlock";
 import { WEEKS_A, WEEKS_B, GLOSSARY } from "@/lib/data";
 import type { GlossaryEntry } from "@/lib/data";
 import Navbar from "@/components/Navbar";
@@ -133,25 +134,27 @@ export default function WeekDetailPage() {
   const router = useRouter();
   const { userName, versionKey, loaded } = useUser();
   const { getWeekProgress } = useProgress();
+  const { isWeekAdminUnlocked, adminLoaded, weekLinks: adminWeekLinks } = useAdminUnlock();
   const [modalTerm, setModalTerm] = useState<GlossaryEntry | null>(null);
 
   const id = Number(params.id);
   const weeks = versionKey === "A" ? WEEKS_A : WEEKS_B;
   const week = weeks[id];
 
+  const adminUnlocked = isWeekAdminUnlocked(id + 1);
   const prevComplete =
-    id === 0 || getWeekProgress(versionKey, id - 1).percent === 100;
+    adminUnlocked && (id === 0 || getWeekProgress(versionKey, id - 1).percent === 100);
 
   useEffect(() => {
     if (loaded && !userName) {
       router.replace("/");
     }
-    if (loaded && userName && !prevComplete) {
+    if (loaded && adminLoaded && userName && !prevComplete) {
       router.replace("/dashboard");
     }
-  }, [userName, loaded, prevComplete, router]);
+  }, [userName, loaded, adminLoaded, prevComplete, router]);
 
-  if (!loaded || !userName || !week || !prevComplete) return null;
+  if (!loaded || !adminLoaded || !userName || !week || !prevComplete) return null;
 
   const weekProgress = getWeekProgress(versionKey, id);
   const isWeekComplete = weekProgress.total > 0 && weekProgress.percent === 100;
@@ -322,7 +325,7 @@ export default function WeekDetailPage() {
               <div className="sidebar-card">
                 <h4>Links for this week</h4>
                 <ul className="links-list">
-                  {week.links.map((l, i) => (
+                  {[...week.links, ...(adminWeekLinks[String(id + 1)] ?? [])].map((l, i) => (
                     <li key={i}>
                       <a href={l.url} target="_blank" rel="noopener noreferrer">
                         <span className="link-icon">{l.icon}</span>

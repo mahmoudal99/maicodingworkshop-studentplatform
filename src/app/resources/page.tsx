@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/lib/store";
+import { useAdminUnlock } from "@/lib/admin-unlock";
 import { RESOURCES } from "@/lib/data";
 import Navbar from "@/components/Navbar";
 import RevealOnScroll from "@/components/RevealOnScroll";
@@ -11,12 +12,16 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 export default function ResourcesPage() {
   const router = useRouter();
   const { userName, loaded } = useUser();
+  const { globalResources } = useAdminUnlock();
 
   useEffect(() => {
     if (loaded && !userName) router.replace("/");
   }, [userName, loaded, router]);
 
   if (!loaded || !userName) return null;
+
+  // Use admin-managed resources if any exist, otherwise fall back to static
+  const resources = globalResources.length > 0 ? globalResources : RESOURCES;
 
   return (
     <>
@@ -31,8 +36,8 @@ export default function ResourcesPage() {
         </p>
 
         <div className="resources-grid">
-          {RESOURCES.map((r, i) => (
-            <RevealOnScroll key={r.title} delay={i * 0.07}>
+          {resources.map((r, i) => (
+            <RevealOnScroll key={r.title || i} delay={i * 0.07}>
               <a
                 className="resource-card"
                 href={r.url}

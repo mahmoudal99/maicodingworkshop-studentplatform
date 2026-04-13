@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/lib/store";
 import { useProgress } from "@/lib/progress";
+import { useAdminUnlock } from "@/lib/admin-unlock";
 import { WEEKS_A, WEEKS_B } from "@/lib/data";
 import Navbar from "@/components/Navbar";
 import WeekCard from "@/components/WeekCard";
@@ -14,6 +15,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { userName, versionKey, loaded } = useUser();
   const { xp, getOverallProgress, getWeekProgress } = useProgress();
+  const { isWeekAdminUnlocked, adminLoaded } = useAdminUnlock();
   const [typedName, setTypedName] = useState("");
   const [progressWidth, setProgressWidth] = useState("0%");
   const typingDone = useRef(false);
@@ -56,7 +58,7 @@ export default function DashboardPage() {
     return () => clearTimeout(t);
   }, [overall.percent]);
 
-  if (!loaded || !userName) return null;
+  if (!loaded || !adminLoaded || !userName) return null;
 
   return (
     <>
@@ -98,8 +100,8 @@ export default function DashboardPage() {
         <div className="week-grid">
           {weeks.map((w, i) => {
             const isLocked =
-              i > 0 &&
-              getWeekProgress(versionKey, i - 1).percent < 100;
+              !isWeekAdminUnlocked(i + 1) ||
+              (i > 0 && getWeekProgress(versionKey, i - 1).percent < 100);
             return (
               <RevealOnScroll key={i} delay={i * 0.07}>
                 <WeekCard week={w} index={i} locked={isLocked} />

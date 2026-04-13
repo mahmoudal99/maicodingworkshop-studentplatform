@@ -5,6 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@/lib/store";
 import { useProgress } from "@/lib/progress";
 import { WEEKS_A, WEEKS_B } from "@/lib/data";
+import { getGameId } from "@/lib/game-map";
+import BinaryCountingGame from "@/components/games/BinaryCountingGame";
+import ComponentMatchGame from "@/components/games/ComponentMatchGame";
+import WireframeBuilder from "@/components/games/WireframeBuilder";
 
 export default function LessonPage() {
   const params = useParams();
@@ -20,7 +24,7 @@ export default function LessonPage() {
   const week = weeks[weekId];
 
   // Flatten all items to find the lesson by global index
-  const allItems: { item: string; key: string; sectionTitle: string; sectionIcon: string; localIndex: number; sectionTotal: number }[] = [];
+  const allItems: { item: string; key: string; sectionTitle: string; sectionIcon: string; sectionIndex: number; itemIndex: number }[] = [];
   if (week) {
     week.sections.forEach((section, sIdx) => {
       section.items.forEach((item, iIdx) => {
@@ -29,8 +33,8 @@ export default function LessonPage() {
           key: `${versionKey}-${weekId}-${sIdx}-${iIdx}`,
           sectionTitle: section.title,
           sectionIcon: section.icon,
-          localIndex: iIdx,
-          sectionTotal: section.items.length,
+          sectionIndex: sIdx,
+          itemIndex: iIdx,
         });
       });
     });
@@ -74,6 +78,16 @@ export default function LessonPage() {
 
   if (!loaded || !userName || !week || !lesson || !prevComplete) return null;
 
+  const gameId = getGameId(versionKey, weekId, lesson.sectionIndex, lesson.itemIndex);
+
+  const GAME_COMPONENTS: Record<string, React.ComponentType<{ onComplete: () => void; accent: string }>> = {
+    "binary-counting": BinaryCountingGame,
+    "component-match": ComponentMatchGame,
+    "wireframe-builder": WireframeBuilder,
+  };
+
+  const GameComponent = gameId ? GAME_COMPONENTS[gameId] : null;
+
   return (
     <div className="lesson-page">
       {/* Top bar */}
@@ -101,50 +115,7 @@ export default function LessonPage() {
 
       {/* Main content */}
       <div className="lesson-content">
-        {!showResult ? (
-          <>
-            {/* Section badge */}
-            <div className="lesson-section-badge">
-              <span>{lesson.sectionIcon}</span>
-              <span>{lesson.sectionTitle}</span>
-              <span className="lesson-section-num">
-                Level {lessonIndex + 1} of {allItems.length}
-              </span>
-            </div>
-
-            {/* Activity card */}
-            <div className="lesson-card" style={{ "--lesson-accent": week.accent } as React.CSSProperties}>
-              <div className="lesson-card-icon" style={{ background: `${week.accent}20`, color: week.accent }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.5" fill="none" />
-                </svg>
-              </div>
-              <h2 className="lesson-card-title">Activity</h2>
-              <p className="lesson-card-text">{lesson.item}</p>
-            </div>
-
-            {/* Action */}
-            <div className="lesson-actions">
-              {completed ? (
-                <div className="lesson-already-done">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span>Already completed</span>
-                </div>
-              ) : (
-                <button
-                  className="lesson-complete-btn"
-                  style={{ background: week.accent }}
-                  onClick={handleComplete}
-                  type="button"
-                >
-                  COMPLETE
-                </button>
-              )}
-            </div>
-          </>
-        ) : (
+        {showResult ? (
           /* Success screen */
           <div className="lesson-result">
             <div className={`lesson-result-star${xpBurst ? " lesson-star-burst" : ""}`} style={{ color: week.accent }}>
@@ -168,6 +139,59 @@ export default function LessonPage() {
               CONTINUE
             </button>
           </div>
+        ) : GameComponent && !completed ? (
+          /* Interactive game */
+          <>
+            <div className="lesson-section-badge">
+              <span>{lesson.sectionIcon}</span>
+              <span>{lesson.sectionTitle}</span>
+              <span className="lesson-section-num">
+                Level {lessonIndex + 1} of {allItems.length}
+              </span>
+            </div>
+            <GameComponent onComplete={handleComplete} accent={week.accent} />
+          </>
+        ) : (
+          /* Plain activity card (for non-game lessons or already completed games) */
+          <>
+            <div className="lesson-section-badge">
+              <span>{lesson.sectionIcon}</span>
+              <span>{lesson.sectionTitle}</span>
+              <span className="lesson-section-num">
+                Level {lessonIndex + 1} of {allItems.length}
+              </span>
+            </div>
+
+            <div className="lesson-card" style={{ "--lesson-accent": week.accent } as React.CSSProperties}>
+              <div className="lesson-card-icon" style={{ background: `${week.accent}20`, color: week.accent }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                </svg>
+              </div>
+              <h2 className="lesson-card-title">Activity</h2>
+              <p className="lesson-card-text">{lesson.item}</p>
+            </div>
+
+            <div className="lesson-actions">
+              {completed ? (
+                <div className="lesson-already-done">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>Already completed</span>
+                </div>
+              ) : (
+                <button
+                  className="lesson-complete-btn"
+                  style={{ background: week.accent }}
+                  onClick={handleComplete}
+                  type="button"
+                >
+                  COMPLETE
+                </button>
+              )}
+            </div>
+          </>
         )}
       </div>
 
