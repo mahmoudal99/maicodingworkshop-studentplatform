@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useEffect, useState } from "react";
+import GameScene from "@/components/game/GameScene";
+import { useCompanion } from "@/lib/game/use-companion";
+import { useDrag } from "@/lib/game/use-drag";
+import { useGameMeta } from "@/lib/game/use-game-meta";
+import { useParticles } from "@/lib/game/use-particles";
+import { useSound } from "@/lib/game/use-sound";
+import { useUser } from "@/lib/store";
 
 interface Props {
   onComplete: () => void;
@@ -10,6 +17,7 @@ interface Props {
 type MemoryHome = "ram" | "storage";
 
 interface MemoryItem {
+  id: string;
   icon: string;
   label: string;
   home: MemoryHome;
@@ -18,147 +26,324 @@ interface MemoryItem {
 
 const MEMORY_ITEMS: MemoryItem[] = [
   {
+    id: "level-state",
     icon: "🎮",
-    label: "The level you are playing right now",
+    label: "The level you're playing right now",
     home: "ram",
-    reason: "RAM holds what the machine is using right now.",
+    reason: "RAM keeps active work ready while the machine is using it.",
   },
   {
+    id: "photo-library",
     icon: "📸",
     label: "A photo saved for later",
     home: "storage",
-    reason: "Storage keeps files even after the machine powers down.",
+    reason: "Storage keeps saved files even after the machine powers off.",
   },
   {
+    id: "music-stream",
     icon: "🎵",
-    label: "A song the machine is playing right now",
+    label: "A song currently playing",
     home: "ram",
-    reason: "Playing something now means the machine keeps it ready in RAM.",
+    reason: "Playing now means the machine needs it in fast working memory.",
   },
   {
+    id: "homework-file",
     icon: "📝",
-    label: "A finished homework file you saved yesterday",
+    label: "Homework saved yesterday",
     home: "storage",
-    reason: "Saved work lives in storage until you open it again.",
+    reason: "Saved work belongs in storage until you open it again.",
   },
   {
+    id: "map-cache",
     icon: "🧭",
-    label: "The map the machine is using right this second",
+    label: "The map open on screen right now",
     home: "ram",
-    reason: "Active data needs quick access, so it stays in RAM.",
+    reason: "Open right now means the machine keeps it in RAM for quick access.",
   },
   {
+    id: "video-archive",
     icon: "🎞️",
-    label: "A video kept on the device for later",
+    label: "A video kept on the device",
     home: "storage",
-    reason: "Kept for later means it belongs in storage.",
+    reason: "Kept for later means it stays in storage.",
   },
 ];
 
 export default function MemoryVaultGame({ onComplete, accent }: Props) {
-  const [index, setIndex] = useState(0);
-  const [feedback, setFeedback] = useState("");
-  const [locked, setLocked] = useState(false);
-  const [done, setDone] = useState(false);
-  const item = MEMORY_ITEMS[index];
+  const { userName } = useUser();
+  const {
+    character: byteCharacter,
+    dialogue: byteDialogue,
+    mood: byteMood,
+    say: byteSay,
+    celebrate: byteCelebrate,
+    alert: byteAlert,
+  } = useCompanion("byte");
+  const {
+    character: echoCharacter,
+    dialogue: echoDialogue,
+    mood: echoMood,
+    say: echoSay,
+  } = useCompanion("echo");
+  const { playCorrect, playWrong, playCombo, playDrop, playPulse } = useSound();
+  const { containerRef, burst } = useParticles();
+  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(MEMORY_ITEMS.length);
 
-  const handleChoice = useCallback(
-    (choice: MemoryHome) => {
-      if (locked) return;
-
-      setLocked(true);
-      setFeedback(
-        choice === item.home ? item.reason : `Not quite. ${item.reason}`
-      );
-
-      setTimeout(() => {
-        if (index === MEMORY_ITEMS.length - 1) {
-          setDone(true);
-          return;
-        }
-        setIndex((prev) => prev + 1);
-        setFeedback("");
-        setLocked(false);
-      }, 1100);
-    },
-    [index, item.home, item.reason, locked]
+  const [queue, setQueue] = useState(MEMORY_ITEMS);
+  const [ramItems, setRamItems] = useState<MemoryItem[]>([]);
+  const [storageItems, setStorageItems] = useState<MemoryItem[]>([]);
+  const [statusText, setStatusText] = useState(
+    "Sort each file into Active Memory or Storage Vault before the machine powers down."
   );
+  const [wrongZone, setWrongZone] = useState<MemoryHome | null>(null);
+  const [phase, setPhase] = useState<"sorting" | "shutdown" | "reveal">("sorting");
+  const powerOff = phase !== "sorting";
 
-  if (done) {
-    return (
-      <div className="game-container">
-        <div className="lab-done">
-          <div className="lab-done-icon" style={{ color: accent }}>
-            RAM / SAVE
-          </div>
-          <h3>Vault sorted</h3>
-          <p>You separated live machine memory from files saved for later.</p>
-          <div className="lab-takeaway">
-            Takeaway: RAM is for now. Storage is for later.
-          </div>
-          <button
-            className="game-btn"
-            style={{ background: accent }}
-            onClick={onComplete}
-            type="button"
-          >
-            Open Next Room
-          </button>
-        </div>
-      </div>
-    );
+  useEffect(() => {
+    const player = userName || "Engineer";
+    byteSay(`${player}, sort the files before the Glitches cut the power.`, 2600);
+    echoSay("RAM is for now. Storage is for later.", 2600);
+  }, [byteSay, echoSay, userName]);
+
+  useEffect(() => {
+    if (phase !== "shutdown") return;
+
+    const container = containerRef.current;
+    const timers = [
+      window.setTimeout(() => {
+        playPulse();
+        setStatusText("Power is off. RAM emptied, but the storage vault kept every saved file.");
+        if (container) {
+          burst({
+            x: container.clientWidth * 0.73,
+            y: 150,
+            color: accent,
+            count: 14,
+            spread: 70,
+          });
+        }
+      }, 900),
+      window.setTimeout(() => {
+        setPhase("reveal");
+        byteCelebrate("The saved files survived the shutdown!");
+        echoSay("Storage keeps data even after power is gone.", 2800);
+      }, 1500),
+    ];
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [accent, burst, byteAlert, byteCelebrate, containerRef, echoSay, phase, playPulse]);
+
+  function handlePowerLever() {
+    if (queue.length > 0 || phase !== "sorting") return;
+
+    setPhase("shutdown");
+    setStatusText("Powering down. Watch what the machine can keep and what it loses.");
+    byteAlert("Power dropping in three... two... one...");
+    echoSay("RAM clears when the machine turns off.", 2400);
+    playPulse();
   }
 
+  function sortItem(item: MemoryItem, destination: MemoryHome) {
+    if (phase !== "sorting") return;
+
+    if (item.home !== destination) {
+      setWrongZone(destination);
+      setStatusText(`Not that one. ${item.reason}`);
+      recordWrong();
+      playWrong();
+      byteAlert("Close, but that file lives in the other system.");
+      echoSay("Active items go to RAM. Saved items go to storage.", 2200);
+      window.setTimeout(() => setWrongZone(null), 360);
+      return;
+    }
+
+    setQueue((prev) => prev.filter((entry) => entry.id !== item.id));
+    if (destination === "ram") {
+      setRamItems((prev) => [...prev, item]);
+    } else {
+      setStorageItems((prev) => [...prev, item]);
+    }
+
+    recordCorrect();
+    playDrop();
+    playCorrect();
+    if (combo + 1 > 1) playCombo(combo + 1);
+    setStatusText(item.reason);
+    echoSay(item.reason, 2400);
+
+    if (destination === "ram") {
+      byteCelebrate("Fast lane. That file is needed right now.");
+    } else {
+      byteCelebrate("Vault locked. That one is safe for later.");
+    }
+
+    const container = containerRef.current;
+    if (container) {
+      burst({
+        x: destination === "ram" ? container.clientWidth * 0.27 : container.clientWidth * 0.73,
+        y: 160,
+        color: accent,
+        count: 10,
+        spread: 50,
+      });
+    }
+  }
+
+  const drag = useDrag({
+    items: queue,
+    onDropInZone: (item, _itemIndex, zoneId) => {
+      if (zoneId === "ram" || zoneId === "storage") {
+        sortItem(item, zoneId);
+      }
+    },
+  });
+
+  const footer =
+    phase === "reveal" ? (
+      <button className="game-btn" style={{ background: accent }} onClick={onComplete} type="button">
+        Open Next Room
+      </button>
+    ) : null;
+
   return (
-    <div
-      className="game-container"
-      style={{ "--game-accent": accent } as React.CSSProperties}
+    <GameScene
+      accent={accent}
+      header={{ room: "Memory Vault", step: `${ramItems.length + storageItems.length} of ${MEMORY_ITEMS.length} files sorted` }}
+      missionTitle="Memory Sorting Vault"
+      missionObjective="Sort live files into fast memory or long-term storage, then power off the machine to see what survives."
+      subtitle="The shutdown is the lesson: RAM clears when power drops, while storage keeps saved files."
+      hint="If the machine needs the file right now, it belongs in RAM. If it should still exist later, store it."
+      companions={[
+        {
+          character: byteCharacter,
+          dialogue: byteDialogue,
+          mood: byteMood,
+        },
+        {
+          character: echoCharacter,
+          dialogue: echoDialogue,
+          mood: echoMood,
+        },
+      ]}
+      stability={{ stability, combo }}
+      statusText={statusText}
+      controls={
+        <div className="memory-queue-panel">
+          <div className="memory-queue-header">
+            <span>Incoming Files</span>
+            <span>{queue.length === 0 ? "Ready to power down" : "Drag or quick-sort each file"}</span>
+          </div>
+
+          <div className="memory-queue-list">
+            {queue.map((item, index) => {
+              const dragHandlers = drag.getDragHandlers(index);
+
+              return (
+                <div key={item.id} className="memory-queue-card">
+                  <div className="memory-queue-drag drag-item" {...dragHandlers}>
+                    <span className="memory-queue-icon">{item.icon}</span>
+                    <div className="memory-queue-copy">
+                      <strong>{item.label}</strong>
+                      <span>Drag me into the right system</span>
+                    </div>
+                  </div>
+
+                  <div className="memory-queue-actions">
+                    <button
+                      className="memory-queue-action"
+                      onClick={() => sortItem(item, "ram")}
+                      type="button"
+                      disabled={phase !== "sorting"}
+                    >
+                      RAM
+                    </button>
+                    <button
+                      className="memory-queue-action"
+                      onClick={() => sortItem(item, "storage")}
+                      type="button"
+                      disabled={phase !== "sorting"}
+                    >
+                      Storage
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {queue.length === 0 && (
+              <div className="memory-queue-empty">
+                All files are sorted. Pull the power lever to test what persists.
+              </div>
+            )}
+          </div>
+
+          <button
+            className={`game-btn memory-power-btn${queue.length === 0 ? " memory-power-btn-ready" : ""}`}
+            style={{ background: queue.length === 0 ? accent : undefined }}
+            onClick={handlePowerLever}
+            type="button"
+            disabled={queue.length > 0 || phase !== "sorting"}
+          >
+            Pull Power Lever
+          </button>
+        </div>
+      }
+      footer={footer}
     >
-      <div className="lab-panel">
-        <div className="lab-panel-header">
-          <span className="lab-room">System Room</span>
-          <span className="lab-step">
-            Sort {index + 1} of {MEMORY_ITEMS.length}
-          </span>
-        </div>
-        <h2 className="lab-title">Memory Vault</h2>
-        <p className="lab-copy">
-          Send each item to the right place inside the machine.
-        </p>
+      <div ref={containerRef} className={`memory-vault-room${powerOff ? " memory-vault-room-poweroff" : ""}`}>
+        <div className={`memory-zone${wrongZone === "ram" ? " game-shake" : ""}`}>
+          <div
+            ref={drag.registerDropZone("ram")}
+            className={`drop-zone memory-zone-shell memory-zone-shell-ram${
+              powerOff ? " memory-zone-shell-off" : ""
+            }`}
+          >
+            <div className="memory-zone-header-text">
+              <strong>Active Memory</strong>
+              <span>Fast. Hot. Right now.</span>
+            </div>
 
-        <div className="lab-workspace">
-          <div className="mvg-item-card">
-            <div className="mvg-item-icon">{item.icon}</div>
-            <div className="mvg-item-label">{item.label}</div>
-          </div>
-
-          <div className="mvg-choices">
-            <button
-              className="mvg-choice mvg-choice-ram"
-              onClick={() => handleChoice("ram")}
-              type="button"
-              disabled={locked}
-              style={{ borderColor: accent }}
-            >
-              <span className="mvg-choice-title">Use Now</span>
-              <span className="mvg-choice-sub">RAM Desk</span>
-            </button>
-            <button
-              className="mvg-choice mvg-choice-storage"
-              onClick={() => handleChoice("storage")}
-              type="button"
-              disabled={locked}
-            >
-              <span className="mvg-choice-title">Keep For Later</span>
-              <span className="mvg-choice-sub">Storage Vault</span>
-            </button>
+            <div className="memory-zone-files">
+              {ramItems.map((item) => (
+                <div
+                  key={item.id}
+                  className={`memory-file memory-file-ram${
+                    phase === "reveal" ? " memory-file-volatile" : ""
+                  }`}
+                >
+                  <span>{item.icon}</span>
+                  <small>{item.label}</small>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="lab-status">
-          {feedback || "Pick the room where this item belongs."}
+        <div className={`memory-core${powerOff ? " memory-core-off" : ""}`}>
+          <div className="memory-core-ring" />
+          <div className="memory-core-label">{powerOff ? "Power Off" : "Core Power"}</div>
+        </div>
+
+        <div className={`memory-zone${wrongZone === "storage" ? " game-shake" : ""}`}>
+          <div ref={drag.registerDropZone("storage")} className="drop-zone memory-zone-shell memory-zone-shell-storage">
+            <div className="memory-zone-header-text">
+              <strong>Storage Vault</strong>
+              <span>Saved. Safe. For later.</span>
+            </div>
+
+            <div className="memory-zone-files">
+              {storageItems.map((item) => (
+                <div key={item.id} className="memory-file memory-file-storage">
+                  <span>{item.icon}</span>
+                  <small>{item.label}</small>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </GameScene>
   );
 }

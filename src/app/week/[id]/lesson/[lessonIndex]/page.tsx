@@ -114,6 +114,7 @@ export default function LessonPage() {
   };
 
   const GameComponent = gameId ? GAME_COMPONENTS[gameId] : null;
+  const isInteractiveGameView = Boolean(GameComponent) && !showResult;
 
   return (
     <div className="lesson-page">
@@ -141,7 +142,7 @@ export default function LessonPage() {
       </div>
 
       {/* Main content */}
-      <div className="lesson-content">
+      <div className={`lesson-content${isInteractiveGameView ? " lesson-content-game" : ""}`}>
         {showResult ? (
           /* Success screen */
           <div className="lesson-result">

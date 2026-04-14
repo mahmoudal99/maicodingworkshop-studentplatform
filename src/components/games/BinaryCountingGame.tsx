@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useEffect, useState } from "react";
+import GameScene from "@/components/game/GameScene";
+import { useCompanion } from "@/lib/game/use-companion";
+import { useGameMeta } from "@/lib/game/use-game-meta";
+import { useParticles } from "@/lib/game/use-particles";
+import { useSound } from "@/lib/game/use-sound";
+import { useUser } from "@/lib/store";
 
 interface Props {
   onComplete: () => void;
@@ -8,134 +14,269 @@ interface Props {
 }
 
 const POWERS = [16, 8, 4, 2, 1];
-const TOTAL_ROUNDS = 5;
+const TARGETS = [5, 13, 22];
 
-function randomTarget() {
-  return Math.floor(Math.random() * 31) + 1; // 1-31
+function freshBits() {
+  return POWERS.map(() => false);
 }
 
 export default function BinaryCountingGame({ onComplete, accent }: Props) {
-  const [bits, setBits] = useState<boolean[]>([false, false, false, false, false]);
-  const [target, setTarget] = useState(() => randomTarget());
-  const [round, setRound] = useState(1);
-  const [phase, setPhase] = useState<"playing" | "correct" | "done">("playing");
-  const [results, setResults] = useState<number[]>([]);
-  const [roundStart, setRoundStart] = useState(() => Date.now());
-  const [valuePop, setValuePop] = useState(false);
+  const { userName } = useUser();
+  const {
+    character: byteCharacter,
+    dialogue: byteDialogue,
+    mood: byteMood,
+    say: byteSay,
+    celebrate: byteCelebrate,
+    alert: byteAlert,
+  } = useCompanion("byte");
+  const {
+    character: echoCharacter,
+    dialogue: echoDialogue,
+    mood: echoMood,
+    say: echoSay,
+  } = useCompanion("echo");
+  const { playTap, playCorrect, playWrong, playCombo, playComplete } = useSound();
+  const { containerRef, burst } = useParticles();
+  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(TARGETS.length);
 
-  const currentValue = bits.reduce((sum, on, i) => sum + (on ? POWERS[i] : 0), 0);
-  const breakdown = POWERS.filter((_, index) => bits[index]).join(" + ");
-
-  const toggleBit = useCallback(
-    (index: number) => {
-      if (phase !== "playing") return;
-      const next = [...bits];
-      next[index] = !next[index];
-      const nextValue = next.reduce(
-        (sum, on, bitIndex) => sum + (on ? POWERS[bitIndex] : 0),
-        0
-      );
-
-      setBits(next);
-      setValuePop(true);
-      setTimeout(() => setValuePop(false), 250);
-
-      if (nextValue === target) {
-        const elapsed = Date.now() - roundStart;
-        setResults((prev) => [...prev, elapsed]);
-        setPhase("correct");
-
-        setTimeout(() => {
-          if (round >= TOTAL_ROUNDS) {
-            setPhase("done");
-          } else {
-            setRound((r) => r + 1);
-            setBits([false, false, false, false, false]);
-            setTarget(randomTarget());
-            setRoundStart(Date.now());
-            setPhase("playing");
-          }
-        }, 1200);
-      }
-    },
-    [bits, phase, round, roundStart, target]
+  const [round, setRound] = useState(0);
+  const [bits, setBits] = useState<boolean[]>(freshBits);
+  const [statusText, setStatusText] = useState(
+    "Flip the switch deck until the corridor door reads the right power."
   );
+  const [phase, setPhase] = useState<"ready" | "opening" | "complete">("ready");
+  const [boltsUnlocked, setBoltsUnlocked] = useState(0);
+  const [doorOpen, setDoorOpen] = useState(false);
+  const [outputPulse, setOutputPulse] = useState(false);
+  const [overloaded, setOverloaded] = useState(false);
 
-  if (phase === "done") {
-    const avgTime = Math.round(results.reduce((a, b) => a + b, 0) / results.length / 1000 * 10) / 10;
-    return (
-      <div className="game-container">
-        <div className="lab-done">
-          <div className="lab-done-icon" style={{ color: accent }}>
-            CORE OK
-          </div>
-          <h3>Reactor stable</h3>
-          <p>You powered every request by turning the right bit cells on and off.</p>
-          <div className="lab-takeaway">
-            Takeaway: Bits act like tiny switches that combine into bigger numbers.
-          </div>
-          <p style={{ color: "var(--muted2)", fontSize: 13, textAlign: "center" }}>
-            Average stabilise time: {avgTime}s
-          </p>
-          <button
-            className="game-btn"
-            style={{ background: accent }}
-            onClick={onComplete}
-            type="button"
-          >
-            Open Next Room
-          </button>
-        </div>
-      </div>
+  const target = TARGETS[round];
+  const currentValue = bits.reduce((sum, active, index) => sum + (active ? POWERS[index] : 0), 0);
+  const bitString = bits.map((bit) => (bit ? "1" : "0")).join("");
+
+  useEffect(() => {
+    const player = userName || "Engineer";
+    byteSay(`${player}, power the lock and we'll open the corridor.`, 2600);
+    echoSay("Each bit is a switch. Their values add together.", 2600);
+  }, [byteSay, echoSay, userName]);
+
+  useEffect(() => {
+    if (phase !== "opening") return;
+
+    const container = containerRef.current;
+    const timers = [
+      window.setTimeout(() => setBoltsUnlocked(1), 220),
+      window.setTimeout(() => setBoltsUnlocked(2), 480),
+      window.setTimeout(() => setBoltsUnlocked(3), 760),
+      window.setTimeout(() => {
+        setDoorOpen(true);
+        playComplete();
+        if (container) {
+          burst({
+            x: container.clientWidth / 2,
+            y: 120,
+            color: accent,
+            count: 18,
+            spread: 90,
+            size: 8,
+          });
+        }
+      }, 1020),
+      window.setTimeout(() => {
+        if (round === TARGETS.length - 1) {
+          setPhase("complete");
+          setStatusText("All binary doors are online. The corridor is stable again.");
+          byteCelebrate(`${userName || "Engineer"}, every lock is open!`);
+          echoSay("Binary numbers are built by combining switch values.", 2800);
+          return;
+        }
+
+        setRound((prev) => prev + 1);
+        setBits(freshBits());
+        setBoltsUnlocked(0);
+        setDoorOpen(false);
+        setOverloaded(false);
+        setPhase("ready");
+        setStatusText("New lock loaded. Build the next code with the switch deck.");
+        byteSay("Another Glitch lock ahead. Same trick, new number.", 2400);
+        echoSay("A different combination can make a new number.", 2400);
+      }, 2200),
+    ];
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [accent, burst, byteCelebrate, byteSay, containerRef, echoSay, phase, playComplete, round, userName]);
+
+  function handleToggle(index: number) {
+    if (phase !== "ready") return;
+
+    playTap();
+    setOutputPulse(true);
+    window.setTimeout(() => setOutputPulse(false), 180);
+
+    const nextBits = [...bits];
+    nextBits[index] = !nextBits[index];
+    const nextValue = nextBits.reduce(
+      (sum, active, bitIndex) => sum + (active ? POWERS[bitIndex] : 0),
+      0
     );
+
+    setBits(nextBits);
+
+    if (nextValue > target) {
+      setOverloaded(true);
+      setStatusText("Too much energy. A higher-value switch pushed the lock past the target.");
+      recordWrong();
+      playWrong();
+      byteAlert("Whoa, overload spark. Pull one of the bigger switches back.");
+      echoSay("Turn off a larger bit to lower the total.", 2200);
+      window.setTimeout(() => setOverloaded(false), 320);
+      return;
+    }
+
+    if (nextValue === target) {
+      recordCorrect();
+      playCorrect();
+      if (combo + 1 > 1) playCombo(combo + 1);
+      setStatusText("Perfect match. The corridor lock is disengaging now.");
+      byteCelebrate(`${userName || "Engineer"}, you matched the door code!`);
+      echoSay("That exact bit pattern makes the target number.", 2400);
+      setPhase("opening");
+      return;
+    }
+
+    if (nextValue === 0) {
+      setStatusText("The lock is asleep again. Add power until the target lights match.");
+      return;
+    }
+
+    setStatusText(`Power climbing. ${nextValue} is active, but the lock still needs ${target}.`);
   }
 
+  const footer =
+    phase === "complete" ? (
+      <button className="game-btn" style={{ background: accent }} onClick={onComplete} type="button">
+        Open Next Room
+      </button>
+    ) : null;
+
   return (
-    <div className="game-container" style={{ "--game-accent": accent } as React.CSSProperties}>
-      <div className="lab-panel">
-        <div className="lab-panel-header">
-          <span className="lab-room">Machine Mission</span>
-          <span className="lab-step">
-            Reactor {round} of {TOTAL_ROUNDS}
-          </span>
-        </div>
-        <h2 className="lab-title">Bit Reactor</h2>
-        <p className="lab-copy">
-          Charge the right energy cells to match the reactor power request.
-        </p>
-
-        <div className="lab-workspace">
-          <div className={`game-target${phase === "correct" ? " game-target-correct" : ""}`} style={{ color: accent, "--game-accent": accent } as React.CSSProperties}>
-            {target}
-          </div>
-
-          <div className="bcg-bits">
-            {POWERS.map((power, i) => (
-              <div key={i} className="bcg-bit-col">
-                <button
-                  className={`bcg-bit-btn${bits[i] ? " bcg-bit-on" : ""}`}
-                  onClick={() => toggleBit(i)}
-                  type="button"
-                >
-                  {bits[i] ? "1" : "0"}
-                </button>
-                <span className="bcg-power">{power}</span>
-              </div>
+    <GameScene
+      accent={accent}
+      header={{ room: "Bit Reactor Corridor", step: `Door ${round + 1} of ${TARGETS.length}` }}
+      missionTitle="Binary Door System"
+      missionObjective="Build the exact door code by flipping bit switches and watching the lock react in real time."
+      subtitle="Every switch adds its value to the lock. Match the number to open the corridor."
+      hint="Start with the largest values. If you overload the lock, turn off a bigger bit."
+      companions={[
+        {
+          character: byteCharacter,
+          dialogue: byteDialogue,
+          mood: byteMood,
+        },
+        {
+          character: echoCharacter,
+          dialogue: echoDialogue,
+          mood: echoMood,
+        },
+      ]}
+      stability={{ stability, combo }}
+      statusText={statusText}
+      controls={
+        <div className="binary-door-controls">
+          <div className="binary-door-switch-deck">
+            {POWERS.map((power, index) => (
+              <button
+                key={power}
+                className={`reactor-cell${bits[index] ? " reactor-cell-on" : ""}`}
+                onClick={() => handleToggle(index)}
+                type="button"
+                disabled={phase !== "ready"}
+                aria-label={`${bits[index] ? "Disable" : "Enable"} ${power} bit`}
+              >
+                <span className="reactor-cell-value">{bits[index] ? "1" : "0"}</span>
+                <span className="reactor-cell-power">{power}</span>
+              </button>
             ))}
           </div>
 
-          <div className={`bcg-value${phase === "correct" ? " bcg-correct" : ""}${valuePop ? " bcg-value-pop" : ""}`}>
-            Power output = {currentValue}
+          <div className="binary-door-readout">
+            <div className="binary-door-readout-row">
+              <span className="binary-door-readout-label">Bit Pattern</span>
+              <span className="binary-door-readout-value">{bitString}</span>
+            </div>
+            <div className="binary-door-readout-row">
+              <span className="binary-door-readout-label">Current Total</span>
+              <span
+                className={`binary-door-readout-value${outputPulse ? " binary-door-readout-value-pop" : ""}`}
+                style={{ color: currentValue === target ? accent : undefined }}
+              >
+                {currentValue}
+              </span>
+            </div>
           </div>
-          <div className="bcg-breakdown">{breakdown ? `${currentValue} = ${breakdown}` : "All cells are sleeping"}</div>
+        </div>
+      }
+      footer={footer}
+    >
+      <div
+        ref={containerRef}
+        className={`binary-door-room${overloaded ? " game-shake" : ""}${
+          doorOpen ? " binary-door-room-open" : ""
+        }`}
+      >
+        <div className="binary-door-target-card">
+          <span className="binary-door-target-label">Target Lock Code</span>
+          <strong className="binary-door-target-value">{target}</strong>
+          <span className="binary-door-target-sub">Round {round + 1}</span>
         </div>
 
-        <div className="lab-status" style={{ color: phase === "correct" ? accent : undefined }}>
-          {phase === "correct"
-            ? "Reactor locked. Those glowing cells combined perfectly."
-            : "Flip cells on and off until the output matches the target."}
+        <div className="binary-door-frame">
+          <div className="binary-door-bolts" aria-hidden="true">
+            {[0, 1, 2].map((bolt) => (
+              <span
+                key={bolt}
+                className={`binary-door-bolt${boltsUnlocked > bolt ? " binary-door-bolt-open" : ""}`}
+              />
+            ))}
+          </div>
+
+          <div className="binary-door-rails" aria-hidden="true">
+            {POWERS.map((power, index) => (
+              <span
+                key={power}
+                className={`binary-door-rail${bits[index] ? " binary-door-rail-on" : ""}`}
+                style={{ animationDelay: `${index * 90}ms` }}
+              />
+            ))}
+          </div>
+
+          <div className="binary-door-shell">
+            <div className="binary-door-shell-track" />
+            <div className={`binary-door-panel binary-door-panel-left${doorOpen ? " binary-door-panel-slide" : ""}`} />
+            <div className={`binary-door-panel binary-door-panel-right${doorOpen ? " binary-door-panel-slide" : ""}`} />
+            <div className="binary-door-core">
+              <span className="binary-door-core-label">Live Power</span>
+              <strong className={`binary-door-core-value${outputPulse ? " reactor-output-pop" : ""}`}>
+                {currentValue}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="reactor-gauge binary-door-gauge">
+          <div
+            className="reactor-gauge-fill"
+            style={{
+              width: `${(currentValue / POWERS.reduce((sum, power) => sum + power, 0)) * 100}%`,
+              background: currentValue > target ? "#ef4444" : accent,
+            }}
+          />
+          <div className="reactor-gauge-target" style={{ left: `${(target / 31) * 100}%` }} />
         </div>
       </div>
-    </div>
+    </GameScene>
   );
 }
