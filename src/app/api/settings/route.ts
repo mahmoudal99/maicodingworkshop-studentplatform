@@ -6,17 +6,20 @@ import {
   setWeekLinks,
   getGlobalResources,
   setGlobalResources,
+  getResourcesUnlocked,
+  setResourcesUnlocked,
   type ResourceLink,
   type GlobalResource,
 } from "@/lib/admin-settings";
 
 export async function GET() {
-  const [unlockedWeeks, weekLinks, globalResources] = await Promise.all([
+  const [unlockedWeeks, weekLinks, globalResources, resourcesUnlocked] = await Promise.all([
     getUnlockedWeeks(),
     getWeekLinks(),
     getGlobalResources(),
+    getResourcesUnlocked(),
   ]);
-  return NextResponse.json({ unlockedWeeks, weekLinks, globalResources });
+  return NextResponse.json({ unlockedWeeks, weekLinks, globalResources, resourcesUnlocked });
 }
 
 export async function POST(request: Request) {
@@ -30,6 +33,7 @@ export async function POST(request: Request) {
     unlockedWeeks?: number[];
     weekLinks?: Record<string, ResourceLink[]>;
     globalResources?: GlobalResource[];
+    resourcesUnlocked?: boolean;
   };
   try {
     body = await request.json();
@@ -63,12 +67,18 @@ export async function POST(request: Request) {
     await setGlobalResources(body.globalResources);
   }
 
+  // Handle resources unlock
+  if (body.resourcesUnlocked !== undefined) {
+    await setResourcesUnlocked(body.resourcesUnlocked);
+  }
+
   // Return updated state
-  const [unlockedWeeks, weekLinks, globalResources] = await Promise.all([
+  const [unlockedWeeks, weekLinks, globalResources, resourcesUnlocked] = await Promise.all([
     getUnlockedWeeks(),
     getWeekLinks(),
     getGlobalResources(),
+    getResourcesUnlocked(),
   ]);
 
-  return NextResponse.json({ success: true, unlockedWeeks, weekLinks, globalResources });
+  return NextResponse.json({ success: true, unlockedWeeks, weekLinks, globalResources, resourcesUnlocked });
 }

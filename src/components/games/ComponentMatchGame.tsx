@@ -8,11 +8,31 @@ interface Props {
 }
 
 const PAIRS = [
-  { component: "CPU", description: "Processes instructions and does calculations" },
-  { component: "RAM", description: "Stores data temporarily while programs run" },
-  { component: "Storage (SSD)", description: "Saves files permanently, even when off" },
-  { component: "Keyboard / Mouse", description: "Sends information into the computer" },
-  { component: "Monitor / Speakers", description: "Displays or outputs results to the user" },
+  {
+    component: "CPU Core",
+    description: "Processes instructions and does the machine's thinking",
+    status: "CPU core online. It is the machine's main thinker.",
+  },
+  {
+    component: "RAM Deck",
+    description: "Holds the data the machine is using right now",
+    status: "RAM deck online. It keeps active work ready to use.",
+  },
+  {
+    component: "Storage Vault",
+    description: "Keeps files saved even when the machine powers off",
+    status: "Storage vault online. It keeps things for later.",
+  },
+  {
+    component: "Input Port",
+    description: "Sends information into the machine",
+    status: "Input port online. It lets signals come in.",
+  },
+  {
+    component: "Output Screen",
+    description: "Shows or plays the machine's results",
+    status: "Output screen online. It sends results back out.",
+  },
 ];
 
 function shuffle<T>(arr: T[]): T[] {
@@ -29,6 +49,9 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
   const [matched, setMatched] = useState<Set<number>>(new Set());
   const [wrongIdx, setWrongIdx] = useState<number | null>(null);
   const [phase, setPhase] = useState<"playing" | "done">("playing");
+  const [status, setStatus] = useState(
+    "Repair each machine bay by matching the part to its job."
+  );
 
   // Shuffle right column once on mount
   const rightOrder = useMemo(() => shuffle(PAIRS.map((_, i) => i)), []);
@@ -38,6 +61,7 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
       if (matched.has(idx) || phase !== "playing") return;
       setSelectedLeft(idx);
       setWrongIdx(null);
+      setStatus(`Selected ${PAIRS[idx].component}. Find its job panel.`);
     },
     [matched, phase]
   );
@@ -53,6 +77,7 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
         setMatched(next);
         setSelectedLeft(null);
         setWrongIdx(null);
+        setStatus(PAIRS[pairIdx].status);
 
         if (next.size === PAIRS.length) {
           setPhase("done");
@@ -60,6 +85,7 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
       } else {
         // Wrong
         setWrongIdx(pairIdx);
+        setStatus("That job belongs to a different part. Try another bay.");
         setTimeout(() => setWrongIdx(null), 500);
       }
     },
@@ -69,52 +95,74 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
   if (phase === "done") {
     return (
       <div className="game-container">
-        <div className="game-target" style={{ color: accent, fontSize: 32 }}>
-          All Matched!
+        <div className="lab-done">
+          <div className="lab-done-icon" style={{ color: accent }}>
+            BAY OK
+          </div>
+          <h3>Repair complete</h3>
+          <p>You brought the machine bays back online by matching each part to its job.</p>
+          <div className="lab-takeaway">
+            Takeaway: Different computer parts each have a special job.
+          </div>
+          <button
+            className="game-btn"
+            style={{ background: accent }}
+            onClick={onComplete}
+            type="button"
+          >
+            Open Next Room
+          </button>
         </div>
-        <p style={{ color: "var(--muted2)", fontSize: 14, textAlign: "center" }}>
-          You matched all {PAIRS.length} components correctly
-        </p>
-        <button
-          className="game-btn"
-          style={{ background: accent }}
-          onClick={onComplete}
-          type="button"
-        >
-          Continue
-        </button>
       </div>
     );
   }
 
   return (
     <div className="game-container" style={{ "--game-accent": accent } as React.CSSProperties}>
-      <p className="game-instruction">Match each component to its description</p>
-      <p className="game-round">{matched.size} of {PAIRS.length} matched</p>
+      <div className="lab-panel">
+        <div className="lab-panel-header">
+          <span className="lab-room">Machine Mission</span>
+          <span className="lab-step">
+            {matched.size} of {PAIRS.length} bays online
+          </span>
+        </div>
+        <h2 className="lab-title">Parts Bay Repair</h2>
+        <p className="lab-copy">
+          Pair each machine part with the bay that explains its job.
+        </p>
 
-      <div className="cmg-columns">
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {PAIRS.map((pair, i) => (
-            <div
-              key={i}
-              className={`cmg-card${selectedLeft === i ? " cmg-card-selected" : ""}${matched.has(i) ? " cmg-card-matched" : ""}`}
-              onClick={() => handleLeftClick(i)}
-            >
-              <span className="cmg-card-label">{pair.component}</span>
+        <div className="lab-workspace">
+          <div className="cmg-columns">
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {PAIRS.map((pair, i) => (
+                <div
+                  key={i}
+                  className={`cmg-card${selectedLeft === i ? " cmg-card-selected" : ""}${
+                    matched.has(i) ? " cmg-card-matched" : ""
+                  }`}
+                  onClick={() => handleLeftClick(i)}
+                >
+                  <span className="cmg-card-label">{pair.component}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {rightOrder.map((pairIdx) => (
-            <div
-              key={pairIdx}
-              className={`cmg-card${matched.has(pairIdx) ? " cmg-card-matched" : ""}${wrongIdx === pairIdx ? " cmg-wrong" : ""}`}
-              onClick={() => handleRightClick(pairIdx)}
-            >
-              {PAIRS[pairIdx].description}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {rightOrder.map((pairIdx) => (
+                <div
+                  key={pairIdx}
+                  className={`cmg-card${matched.has(pairIdx) ? " cmg-card-matched" : ""}${
+                    wrongIdx === pairIdx ? " cmg-wrong" : ""
+                  }`}
+                  onClick={() => handleRightClick(pairIdx)}
+                >
+                  {PAIRS[pairIdx].description}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
+
+        <div className="lab-status">{status}</div>
       </div>
     </div>
   );

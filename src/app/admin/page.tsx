@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [weeks, setWeeks] = useState<boolean[]>([true, false, false, false, false, false]);
   const [weekLinks, setWeekLinks] = useState<Record<string, ResourceLink[]>>({});
   const [globalResources, setGlobalResources] = useState<GlobalResource[]>([]);
+  const [resourcesUnlocked, setResourcesUnlocked] = useState(false);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [tab, setTab] = useState<Tab>("weeks");
@@ -51,6 +52,9 @@ export default function AdminPage() {
         }
         if (Array.isArray(data.globalResources)) {
           setGlobalResources(data.globalResources);
+        }
+        if (typeof data.resourcesUnlocked === "boolean") {
+          setResourcesUnlocked(data.resourcesUnlocked);
         }
       })
       .catch(() => {});
@@ -76,6 +80,9 @@ export default function AdminPage() {
         if (Array.isArray(data.globalResources)) {
           setGlobalResources(data.globalResources);
         }
+        if (typeof data.resourcesUnlocked === "boolean") {
+          setResourcesUnlocked(data.resourcesUnlocked);
+        }
       } else {
         setError("Wrong password");
       }
@@ -95,13 +102,14 @@ export default function AdminPage() {
       const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, unlockedWeeks, weekLinks, globalResources }),
+        body: JSON.stringify({ password, unlockedWeeks, weekLinks, globalResources, resourcesUnlocked }),
       });
       if (res.ok) {
         const data = await res.json();
         setWeeks([1, 2, 3, 4, 5, 6].map((w) => data.unlockedWeeks.includes(w)));
         if (data.weekLinks) setWeekLinks(data.weekLinks);
         if (data.globalResources) setGlobalResources(data.globalResources);
+        if (typeof data.resourcesUnlocked === "boolean") setResourcesUnlocked(data.resourcesUnlocked);
         setFeedback("Saved!");
         setTimeout(() => setFeedback(""), 2000);
       } else {
@@ -111,7 +119,7 @@ export default function AdminPage() {
       setFeedback("Connection error");
     }
     setSaving(false);
-  }, [password, weeks, weekLinks, globalResources]);
+  }, [password, weeks, weekLinks, globalResources, resourcesUnlocked]);
 
   const toggleWeek = (index: number) => {
     if (index === 0) return;
@@ -240,6 +248,18 @@ export default function AdminPage() {
                   {i === 0 && <span className="admin-always-on">Always on</span>}
                 </div>
               ))}
+
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: 12, paddingTop: 12 }}>
+                <div
+                  className={`admin-week-row${resourcesUnlocked ? " admin-week-on" : ""}`}
+                  onClick={() => setResourcesUnlocked((v) => !v)}
+                >
+                  <div className={`admin-toggle${resourcesUnlocked ? " admin-toggle-on" : ""}`}>
+                    <div className="admin-toggle-knob" />
+                  </div>
+                  <span className="admin-week-label">Resources Page</span>
+                </div>
+              </div>
             </div>
           </>
         )}

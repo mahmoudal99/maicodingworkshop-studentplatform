@@ -67,22 +67,24 @@ export default function CodeEverywhereQuiz({ onComplete, accent }: Props) {
   if (done) {
     return (
       <div className="game-container">
-        <div className="ceq-done">
+        <div className="lab-done">
           <div className="ceq-score-display">
             {score}/{questions.length}
           </div>
-          <h3>Code is everywhere!</h3>
+          <h3>Scanner sweep complete</h3>
           <p>
-            Every app, website, and game was built by someone writing code. The
-            CPU runs it, the browser displays it, and now you understand the
-            connection between coding and computers.
+            Your scanner found software hiding inside many digital systems all around the lab.
           </p>
+          <div className="lab-takeaway">
+            Takeaway: Code powers many of the digital things you use every day.
+          </div>
           <button
-            className="ceq-finish-btn"
+            className="game-btn"
             style={{ background: accent }}
             onClick={onComplete}
+            type="button"
           >
-            Continue
+            Open Next Room
           </button>
         </div>
       </div>
@@ -90,44 +92,60 @@ export default function CodeEverywhereQuiz({ onComplete, accent }: Props) {
   }
 
   return (
-    <div className="game-container">
-      <p className="game-instruction">
-        Question {current + 1} of {questions.length}
-      </p>
-      <p className="ceq-prompt">IS THIS MADE WITH CODE?</p>
-
-      <div className="ceq-item-card">
-        <span className="ceq-item-icon">{q.icon}</span>
-        <span className="ceq-item-name">{q.item}</span>
-      </div>
-
-      {feedback && (
-        <div className={`ceq-feedback ${feedback.correct ? "ceq-correct" : "ceq-wrong"}`}>
-          <strong>{feedback.correct ? "✓ Correct!" : "✗ Not quite!"}</strong>
-          <p>{feedback.explanation}</p>
+    <div
+      className="game-container"
+      style={{ "--game-accent": accent } as React.CSSProperties}
+    >
+      <div className="lab-panel">
+        <div className="lab-panel-header">
+          <span className="lab-room">Machine Mission</span>
+          <span className="lab-step">
+            Scan {current + 1} of {questions.length}
+          </span>
         </div>
-      )}
+        <h2 className="lab-title">Code Scanner</h2>
+        <p className="lab-copy">
+          Use the lab scanner to decide whether software is inside this object.
+        </p>
+        <p className="ceq-prompt">SOFTWARE INSIDE?</p>
 
-      {!feedback && (
-        <div className="ceq-buttons">
-          <button
-            className="ceq-btn ceq-btn-yes"
-            style={{ borderColor: accent }}
-            onClick={() => handleAnswer("code")}
-          >
-            💻 Yes, it&apos;s code
-          </button>
-          <button
-            className="ceq-btn ceq-btn-no"
-            onClick={() => handleAnswer("not-code")}
-          >
-            🚫 No code involved
-          </button>
+        <div className="lab-workspace">
+          <div className="ceq-item-card">
+            <span className="ceq-item-icon">{q.icon}</span>
+            <span className="ceq-item-name">{q.item}</span>
+          </div>
+
+          {feedback && (
+            <div className={`ceq-feedback ${feedback.correct ? "ceq-correct" : "ceq-wrong"}`}>
+              <strong>{feedback.correct ? "Scanner matched" : "Scanner recalibrated"}</strong>
+              <p>{feedback.explanation}</p>
+            </div>
+          )}
+
+          {!feedback && (
+            <div className="ceq-buttons">
+              <button
+                className="ceq-btn ceq-btn-yes"
+                style={{ borderColor: accent }}
+                onClick={() => handleAnswer("code")}
+                type="button"
+              >
+                ⚡ Software inside
+              </button>
+              <button
+                className="ceq-btn ceq-btn-no"
+                onClick={() => handleAnswer("not-code")}
+                type="button"
+              >
+                ○ No software inside
+              </button>
+            </div>
+          )}
+
+          <div className="ceq-score-bar">
+            Scanner score: <strong>{score}</strong>
+          </div>
         </div>
-      )}
-
-      <div className="ceq-score-bar">
-        Score: <strong>{score}</strong>
       </div>
     </div>
   );

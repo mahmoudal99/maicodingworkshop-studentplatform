@@ -15,11 +15,11 @@ interface Stage {
 }
 
 const CORRECT_CHAIN: Stage[] = [
-  { id: "write", label: "You write JavaScript", description: "A programmer types code in a text editor or browser", icon: "✍️" },
-  { id: "browser", label: "The browser reads it", description: "The browser's JavaScript engine parses your code", icon: "🌐" },
-  { id: "translate", label: "Translates to binary", description: "The engine compiles your code into machine instructions (0s and 1s)", icon: "🔄" },
-  { id: "cpu", label: "CPU executes it", description: "The processor runs the binary instructions one by one", icon: "⚡" },
-  { id: "result", label: "Result appears on screen", description: "The output — text, images, animations — shows up in the browser", icon: "🖥️" },
+  { id: "write", label: "You type the code", description: "A human writes a command the machine can read later", icon: "✍️" },
+  { id: "browser", label: "The browser reads it", description: "The browser opens the code packet and checks the instructions", icon: "🌐" },
+  { id: "translate", label: "It translates to machine signals", description: "The code is turned into instructions the hardware can use", icon: "🔄" },
+  { id: "cpu", label: "The CPU runs it", description: "The CPU follows those machine instructions step by step", icon: "⚡" },
+  { id: "result", label: "The result appears", description: "The machine sends the finished result to the screen", icon: "🖥️" },
 ];
 
 function shuffle<T>(arr: T[]): T[] {
@@ -63,7 +63,7 @@ export default function CodeExecutionChainGame({ onComplete, accent }: Props) {
   if (done) {
     return (
       <div className="game-container">
-        <div className="cec-done">
+        <div className="lab-done">
           <div className="cec-chain-display">
             {CORRECT_CHAIN.map((s, i) => (
               <span key={s.id} className="cec-chain-item">
@@ -72,18 +72,18 @@ export default function CodeExecutionChainGame({ onComplete, accent }: Props) {
               </span>
             ))}
           </div>
-          <h3>You traced the full chain!</h3>
-          <p>
-            Every time you run code, this is what happens — from human-readable
-            instructions all the way down to binary, and back up to pixels on
-            your screen.
-          </p>
+          <h3>Conveyor complete</h3>
+          <p>You guided the code packet through every room inside the machine.</p>
+          <div className="lab-takeaway">
+            Takeaway: Code goes through several systems before you see the result.
+          </div>
           <button
-            className="cec-finish-btn"
+            className="game-btn"
             style={{ background: accent }}
             onClick={onComplete}
+            type="button"
           >
-            Continue
+            Open Next Room
           </button>
         </div>
       </div>
@@ -91,46 +91,65 @@ export default function CodeExecutionChainGame({ onComplete, accent }: Props) {
   }
 
   return (
-    <div className="game-container">
-      <p className="game-instruction">
-        HOW DOES CODE RUN ON A COMPUTER?
-      </p>
-      <p className="cec-subtitle">
-        Tap the stages in order — from writing code to seeing the result
-      </p>
+    <div
+      className="game-container"
+      style={{ "--game-accent": accent } as React.CSSProperties}
+    >
+      <div className="lab-panel">
+        <div className="lab-panel-header">
+          <span className="lab-room">Machine Mission</span>
+          <span className="lab-step">
+            Stage {placed.length + 1} of {CORRECT_CHAIN.length}
+          </span>
+        </div>
+        <h2 className="lab-title">Code Conveyor</h2>
+        <p className="lab-copy">
+          Send the code packet through the right rooms in order.
+        </p>
+        <p className="cec-subtitle">
+          Tap the next room the packet should visit.
+        </p>
 
-      {/* Placed chain */}
-      <div className="cec-placed">
-        {placed.map((s, i) => (
-          <div key={s.id} className="cec-placed-stage" style={{ borderColor: accent }}>
-            <span className="cec-stage-icon">{s.icon}</span>
-            <span className="cec-stage-label">{s.label}</span>
-            {showInfo === s.id && (
-              <div className="cec-info-popup">{s.description}</div>
+        <div className="lab-workspace">
+          <div className="cec-placed">
+            {placed.map((s, i) => (
+              <div key={s.id} className="cec-placed-stage" style={{ borderColor: accent }}>
+                <span className="cec-stage-icon">{s.icon}</span>
+                <span className="cec-stage-label">{s.label}</span>
+                {showInfo === s.id && (
+                  <div className="cec-info-popup">{s.description}</div>
+                )}
+                {i < placed.length - 1 && <div className="cec-connector" style={{ background: accent }} />}
+              </div>
+            ))}
+            {placed.length < CORRECT_CHAIN.length && (
+              <div className={`cec-placeholder${wrong ? " csg-shake" : ""}`}>
+                <span className="cec-stage-icon">?</span>
+                <span className="cec-stage-label">Room {placed.length + 1}</span>
+              </div>
             )}
-            {i < placed.length - 1 && <div className="cec-connector" style={{ background: accent }} />}
           </div>
-        ))}
-        {placed.length < CORRECT_CHAIN.length && (
-          <div className={`cec-placeholder${wrong ? " csg-shake" : ""}`}>
-            <span className="cec-stage-icon">?</span>
-            <span className="cec-stage-label">Step {placed.length + 1}</span>
-          </div>
-        )}
-      </div>
 
-      {/* Choices */}
-      <div className="cec-choices">
-        {remaining.map((s) => (
-          <button
-            key={s.id}
-            className="cec-choice-btn"
-            onClick={() => handlePick(s)}
-          >
-            <span className="cec-choice-icon">{s.icon}</span>
-            {s.label}
-          </button>
-        ))}
+          <div className="cec-choices">
+            {remaining.map((s) => (
+              <button
+                key={s.id}
+                className="cec-choice-btn"
+                onClick={() => handlePick(s)}
+                type="button"
+              >
+                <span className="cec-choice-icon">{s.icon}</span>
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="lab-status">
+          {wrong
+            ? "That room comes later in the conveyor."
+            : "The packet starts with human-written code and ends as visible output."}
+        </div>
       </div>
     </div>
   );

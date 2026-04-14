@@ -16,46 +16,6 @@ import GlossaryModal from "@/components/GlossaryModal";
 import WeekSvg from "@/components/WeekSvg";
 import RevealOnScroll from "@/components/RevealOnScroll";
 
-function XpPopup({ show }: { show: boolean }) {
-  if (!show) return null;
-  return <span className="xp-popup">+10 XP</span>;
-}
-
-function ActivityItem({
-  item,
-  itemKey,
-}: {
-  item: string;
-  itemKey: string;
-}) {
-  const { toggle, isCompleted } = useProgress();
-  const checked = isCompleted(itemKey);
-  const [showXp, setShowXp] = useState(false);
-
-  const handleClick = useCallback(() => {
-    if (!checked) {
-      setShowXp(true);
-      setTimeout(() => setShowXp(false), 800);
-    }
-    toggle(itemKey);
-  }, [checked, itemKey, toggle]);
-
-  return (
-    <li className={`activity-item${checked ? " completed" : ""}`}>
-      <button
-        className={`activity-check${checked ? " checked" : ""}`}
-        onClick={handleClick}
-        aria-label={checked ? `Unmark: ${item}` : `Complete: ${item}`}
-        type="button"
-      >
-        {checked ? "\u2713" : ""}
-      </button>
-      <span className="activity-item-text">{item}</span>
-      <XpPopup show={showXp} />
-    </li>
-  );
-}
-
 function OutcomeItem({
   outcome,
   itemKey,
@@ -95,40 +55,6 @@ function OutcomeItem({
   );
 }
 
-function SectionProgress({
-  versionKey,
-  weekIndex,
-  sectionIndex,
-  total,
-}: {
-  versionKey: string;
-  weekIndex: number;
-  sectionIndex: number;
-  total: number;
-}) {
-  const { completed } = useProgress();
-  let done = 0;
-  for (let i = 0; i < total; i++) {
-    const key = `${versionKey}-${weekIndex}-${sectionIndex}-${i}`;
-    if (completed[key]) done++;
-  }
-  const percent = total === 0 ? 0 : Math.round((done / total) * 100);
-
-  return (
-    <div className="section-progress">
-      <span className="section-progress-text">
-        {done}/{total} completed
-      </span>
-      <div className="section-progress-track">
-        <div
-          className="section-progress-fill"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
 export default function WeekDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -158,6 +84,7 @@ export default function WeekDetailPage() {
 
   const weekProgress = getWeekProgress(versionKey, id);
   const isWeekComplete = weekProgress.total > 0 && weekProgress.percent === 100;
+  const isMachineLabWeek = week.title === "Inside the Machine";
 
   const hasBinary =
     week.title.includes("How Computers Think") ||
@@ -241,6 +168,7 @@ export default function WeekDetailPage() {
             sections={week.sections}
             weekIndex={id}
             accent={week.accent}
+            pathTheme={isMachineLabWeek ? "machine-lab" : "default"}
           />
         </RevealOnScroll>
 

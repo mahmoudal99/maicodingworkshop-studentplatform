@@ -14,36 +14,33 @@ interface Challenge {
 
 const CHALLENGES: Challenge[] = [
   {
-    title: "Make a cup of tea",
+    title: "Wake the scout bot",
     steps: [
-      "Boil the kettle",
-      "Put a teabag in the cup",
-      "Pour hot water into the cup",
-      "Wait 2 minutes",
-      "Remove the teabag",
-      "Drink the tea",
+      "Press the scout bot power switch",
+      "Wait for the boot lights",
+      "Load the mission chip",
+      "Tell the bot to stand by",
+      "Send the start command",
     ],
   },
   {
-    title: "Log in to a website",
+    title: "Open the shield door",
     steps: [
-      "Open the browser",
-      "Type the website URL",
-      "Click the login button",
-      "Enter your username",
-      "Enter your password",
-      "Click submit",
+      "Tap the door panel",
+      "Enter the access code",
+      "Wait for the machine to check it",
+      "Press unlock",
+      "Walk through the open door",
     ],
   },
   {
-    title: "Send a text message",
+    title: "Deliver an energy cell",
     steps: [
-      "Unlock your phone",
-      "Open the messaging app",
-      "Choose the contact",
-      "Type your message",
-      "Check for typos",
-      "Press send",
+      "Pick up the energy cell",
+      "Carry it to the charger bay",
+      "Place it in the slot",
+      "Wait for the charge light",
+      "Return to the control path",
     ],
   },
 ];
@@ -100,19 +97,22 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
   if (done) {
     return (
       <div className="game-container">
-        <div className="csg-done">
-          <div className="csg-done-icon">🎯</div>
-          <h3>You think like a coder!</h3>
-          <p>
-            Coding is exactly this — writing precise instructions in the right
-            order. A computer follows your steps exactly, so the order matters.
-          </p>
+        <div className="lab-done">
+          <div className="lab-done-icon" style={{ color: accent }}>
+            CMD OK
+          </div>
+          <h3>Commands accepted</h3>
+          <p>The lab robots only finished each mission when the steps were in the right order.</p>
+          <div className="lab-takeaway">
+            Takeaway: Code is a sequence of precise steps.
+          </div>
           <button
-            className="csg-finish-btn"
+            className="game-btn"
             style={{ background: accent }}
             onClick={onComplete}
+            type="button"
           >
-            Continue
+            Open Next Room
           </button>
         </div>
       </div>
@@ -122,41 +122,60 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
   const remaining = shuffled.filter((s) => !selected.includes(s));
 
   return (
-    <div className="game-container">
-      <p className="game-instruction">
-        Round {round + 1} of {CHALLENGES.length}
-      </p>
-      <p className="csg-title">
-        PUT THE STEPS IN ORDER: <strong>{challenge.title}</strong>
-      </p>
+    <div
+      className="game-container"
+      style={{ "--game-accent": accent } as React.CSSProperties}
+    >
+      <div className="lab-panel">
+        <div className="lab-panel-header">
+          <span className="lab-room">Machine Mission</span>
+          <span className="lab-step">
+            Mission {round + 1} of {CHALLENGES.length}
+          </span>
+        </div>
+        <h2 className="lab-title">Command Builder</h2>
+        <p className="lab-copy">
+          Put the robot steps in order so the mission can run.
+        </p>
+        <p className="csg-title">
+          Mission: <strong>{challenge.title}</strong>
+        </p>
 
-      {/* Already placed steps */}
-      <div className="csg-placed">
-        {selected.map((s, i) => (
-          <div key={i} className="csg-placed-step" style={{ borderLeftColor: accent }}>
-            <span className="csg-step-num">{i + 1}</span>
-            {s}
+        <div className="lab-workspace">
+          <div className="csg-placed">
+            {selected.map((s, i) => (
+              <div key={i} className="csg-placed-step" style={{ borderLeftColor: accent }}>
+                <span className="csg-step-num">{i + 1}</span>
+                {s}
+              </div>
+            ))}
+            {selected.length < correctOrder.length && (
+              <div className={`csg-placeholder${wrong ? " csg-shake" : ""}`}>
+                <span className="csg-step-num">{selected.length + 1}</span>
+                Pick the next command...
+              </div>
+            )}
           </div>
-        ))}
-        {selected.length < correctOrder.length && (
-          <div className={`csg-placeholder${wrong ? " csg-shake" : ""}`}>
-            <span className="csg-step-num">{selected.length + 1}</span>
-            Pick the next step…
-          </div>
-        )}
-      </div>
 
-      {/* Remaining choices */}
-      <div className="csg-choices">
-        {remaining.map((s) => (
-          <button
-            key={s}
-            className="csg-choice-btn"
-            onClick={() => handlePick(s)}
-          >
-            {s}
-          </button>
-        ))}
+          <div className="csg-choices">
+            {remaining.map((s) => (
+              <button
+                key={s}
+                className="csg-choice-btn"
+                onClick={() => handlePick(s)}
+                type="button"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="lab-status">
+          {wrong
+            ? "That command happens at a different point in the mission."
+            : "Robots follow steps exactly in the order you give them."}
+        </div>
       </div>
     </div>
   );

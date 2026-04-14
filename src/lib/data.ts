@@ -90,31 +90,31 @@ export const GLOSSARY: GlossaryEntry[] = [
 export const WEEKS_A: WeekData[] = [
   {
     num: "W1", label: "Week 1",
-    title: "How Computers Think",
-    sub: "Binary, computer parts, and the basics",
+    title: "Inside the Machine",
+    sub: "Bits, memory, and code inside a futuristic lab",
     accent: "#a78bfa",
-    tags: ["Binary", "CPU/RAM", "Coding", "How code runs"],
-    milestone: "Understand the chain from human language to binary and back.",
-    overview: "This is your starting point. Before you write code, you'll build a simple mental model of how computers work so the rest of the course feels less mysterious.",
+    tags: ["Machine Lab", "Binary", "Memory Systems", "Code Flow"],
+    milestone: "Power up the lab by tracing how instructions become real results.",
+    overview: "This week you step inside a futuristic machine lab. Each node is a short mission where you power systems, route signals, wake up memory rooms, and discover how code becomes something you can actually see on screen.",
     sections: [
       {
-        icon: "\u26a1", title: "Activities",
+        icon: "\u26a1", title: "Machine Missions",
         items: [
-          "Binary bulbs (CS50-style): count in binary using raised hands or cards. 5 people = 5 bits = up to 32 values. Race to represent numbers. Makes binary click in under 10 minutes.",
-          "Computer components tour: open a browser, open Task Manager or Activity Monitor, look at CPU, RAM, and storage. Map these to Input \u2192 Process \u2192 Output. Watch CPU spike when you open a heavy website. Discuss what each part does in plain English.",
-          "What is coding? Group discussion first \u2014 what do participants think coding is? Then explain: code is a set of instructions written in a language the computer understands. You write the steps; the computer follows them exactly \u2014 including your mistakes.",
-          "How does code run on a computer? Walk through the chain: you write JavaScript \u2192 the browser reads it \u2192 translates it to binary instructions \u2192 the CPU executes them \u2192 the result appears on screen. The bridge between human language and 0s and 1s.",
-          "How does coding relate to computers? Everything on a computer \u2014 every app, website, game \u2014 was written by someone in a programming language. The CPU in the components tour? It runs code. The browser? Code. Even the operating system is code."
+          "Bit Reactor",
+          "Parts Bay Repair",
+          "Command Builder",
+          "Code Conveyor",
+          "Code Scanner"
         ]
       },
       {
-        icon: "\ud83d\udca1", title: "Key Concepts",
+        icon: "\ud83d\udca1", title: "System Rooms",
         items: [
-          "Bits, bytes, and why binary exists \u2014 circuits are ON or OFF, so computers use 0s and 1s",
-          "Input \u2192 Process \u2192 Output as a universal model for all computing",
-          "What CPU, RAM, and storage each do \u2014 and how they work together",
-          "What coding is: writing precise instructions in a language a machine can follow",
-          "How code runs: human-readable language \u2192 translation \u2192 binary \u2192 CPU \u2192 output"
+          "Byte Forge",
+          "Signal Tunnel",
+          "Memory Vault",
+          "Literal Bot Test",
+          "Launch the Lab"
         ]
       }
     ],
@@ -126,10 +126,10 @@ export const WEEKS_A: WeekData[] = [
       "Can explain what coding is and how it connects to the hardware they just explored"
     ],
     links: [],
-    note: "Don't worry about memorising everything yet. If the binary activity starts to feel like a game, you're learning exactly what you need to.",
+    note: "You do not need to memorise the whole machine at once. Power one room, solve one mission, and the system starts making sense piece by piece.",
     diff: {
-      ahead: ["Try to represent your age in binary without help", "Research how much RAM common devices have", "Trace the full path from typing a URL to seeing a web page"],
-      behind: ["Focus on the binary activity only \u2014 that's the core concept", "Don't stress about memorising the code-execution chain yet \u2014 it will make more sense once you start writing code"]
+      ahead: ["Build bigger numbers in the reactor without help", "Spot which parts of your own device are RAM, storage, and output", "Trace what happens after you click a button on a web page"],
+      behind: ["Replay the lab missions you enjoyed most \u2014 repetition is part of how this clicks", "Focus on the big idea that computers follow simple instructions one step at a time"]
     }
   },
   {

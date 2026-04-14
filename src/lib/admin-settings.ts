@@ -22,6 +22,7 @@ interface Settings {
   unlockedWeeks: number[];
   weekLinks?: Record<string, ResourceLink[]>;   // keyed by week number "1"-"6"
   globalResources?: GlobalResource[];
+  resourcesUnlocked?: boolean;
 }
 
 // ── Netlify Blobs backend ──
@@ -121,4 +122,29 @@ export async function setGlobalResources(resources: GlobalResource[]): Promise<v
   }
   const current = readLocal();
   writeLocal({ ...current, globalResources: resources });
+}
+
+// ── Resources Unlock ──
+
+export async function getResourcesUnlocked(): Promise<boolean> {
+  const store = await getBlobStore();
+  if (store) {
+    try {
+      const data = await store.get("resources-unlocked", { type: "json" }) as boolean | null;
+      return data ?? false;
+    } catch {
+      return false;
+    }
+  }
+  return readLocal().resourcesUnlocked ?? false;
+}
+
+export async function setResourcesUnlocked(unlocked: boolean): Promise<void> {
+  const store = await getBlobStore();
+  if (store) {
+    await store.setJSON("resources-unlocked", unlocked);
+    return;
+  }
+  const current = readLocal();
+  writeLocal({ ...current, resourcesUnlocked: unlocked });
 }

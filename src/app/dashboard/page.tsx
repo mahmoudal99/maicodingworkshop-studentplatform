@@ -15,7 +15,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { userName, versionKey, loaded } = useUser();
   const { xp, getOverallProgress, getWeekProgress } = useProgress();
-  const { isWeekAdminUnlocked, adminLoaded } = useAdminUnlock();
+  const { isWeekAdminUnlocked, adminLoaded, resourcesUnlocked } = useAdminUnlock();
   const [typedName, setTypedName] = useState("");
   const [progressWidth, setProgressWidth] = useState("0%");
   const typingDone = useRef(false);
@@ -133,17 +133,27 @@ export default function DashboardPage() {
             </Link>
           </RevealOnScroll>
           <RevealOnScroll delay={0.07}>
-            <Link
-              href="/resources"
-              className="week-card"
-              style={{ "--card-accent": "var(--blue)" } as React.CSSProperties}
-            >
-              <div className="week-num" style={{ color: "var(--blue)" }}>
-                {"// After the course"}
+            {resourcesUnlocked ? (
+              <Link
+                href="/resources"
+                className="week-card"
+                style={{ "--card-accent": "var(--blue)" } as React.CSSProperties}
+              >
+                <div className="week-num" style={{ color: "var(--blue)" }}>
+                  {"// After the course"}
+                </div>
+                <h3>What to Do Next</h3>
+                <p>Free resources to help you keep learning after the course.</p>
+              </Link>
+            ) : (
+              <div className="week-card week-card-locked">
+                <div className="week-num" style={{ color: "var(--muted2)" }}>
+                  {"🔒 // After the course"}
+                </div>
+                <h3>What to Do Next</h3>
+                <p>Resources will be unlocked by your instructor.</p>
               </div>
-              <h3>What to Do Next</h3>
-              <p>Free resources to help you keep learning after the course.</p>
-            </Link>
+            )}
           </RevealOnScroll>
         </div>
       </div>

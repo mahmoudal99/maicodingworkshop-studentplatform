@@ -12,13 +12,14 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 export default function ResourcesPage() {
   const router = useRouter();
   const { userName, loaded } = useUser();
-  const { globalResources } = useAdminUnlock();
+  const { globalResources, resourcesUnlocked, adminLoaded } = useAdminUnlock();
 
   useEffect(() => {
     if (loaded && !userName) router.replace("/");
-  }, [userName, loaded, router]);
+    if (loaded && adminLoaded && !resourcesUnlocked) router.replace("/dashboard");
+  }, [userName, loaded, adminLoaded, resourcesUnlocked, router]);
 
-  if (!loaded || !userName) return null;
+  if (!loaded || !adminLoaded || !userName || !resourcesUnlocked) return null;
 
   // Use admin-managed resources if any exist, otherwise fall back to static
   const resources = globalResources.length > 0 ? globalResources : RESOURCES;

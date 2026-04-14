@@ -8,7 +8,6 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { setUser } = useUser();
   const [name, setName] = useState("");
-  const [version, setVersion] = useState<"A" | "B">("A");
   const [error, setError] = useState(false);
 
   const handleSubmit = () => {
@@ -16,7 +15,7 @@ export default function OnboardingPage() {
       setError(true);
       return;
     }
-    setUser(name.trim(), version);
+    setUser(name.trim(), "A");
     router.push("/dashboard");
   };
 
@@ -53,23 +52,6 @@ export default function OnboardingPage() {
               }}
               style={error ? { borderColor: "var(--coral)" } : undefined}
             />
-          </div>
-          <div className="input-group">
-            <label htmlFor="version-select">
-              {"// Choose your path"}
-            </label>
-            <select
-              id="version-select"
-              value={version}
-              onChange={(e) => setVersion(e.target.value as "A" | "B")}
-            >
-              <option value="A">
-                Version A — start with how computers work
-              </option>
-              <option value="B">
-                {"Version B — jump straight into problem solving"}
-              </option>
-            </select>
           </div>
           <button className="btn-primary" onClick={handleSubmit}>
             {"Let's go \u2192"}

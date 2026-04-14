@@ -11,6 +11,11 @@ import ComponentMatchGame from "@/components/games/ComponentMatchGame";
 import CodeSortingGame from "@/components/games/CodeSortingGame";
 import CodeExecutionChainGame from "@/components/games/CodeExecutionChainGame";
 import CodeEverywhereQuiz from "@/components/games/CodeEverywhereQuiz";
+import ByteForgeGame from "@/components/games/ByteForgeGame";
+import SignalTunnelGame from "@/components/games/SignalTunnelGame";
+import MemoryVaultGame from "@/components/games/MemoryVaultGame";
+import LiteralBotTestGame from "@/components/games/LiteralBotTestGame";
+import LaunchTheLabGame from "@/components/games/LaunchTheLabGame";
 
 export default function LessonPage() {
   const params = useParams();
@@ -19,6 +24,7 @@ export default function LessonPage() {
   const { toggle, isCompleted, getWeekProgress } = useProgress();
   const [showResult, setShowResult] = useState(false);
   const [xpBurst, setXpBurst] = useState(false);
+  const [earnedXp, setEarnedXp] = useState(false);
 
   const weekId = Number(params.id);
   const lessonIndex = Number(params.lessonIndex);
@@ -62,11 +68,17 @@ export default function LessonPage() {
   }, [userName, loaded, prevComplete, weekId, router]);
 
   const handleComplete = useCallback(() => {
-    if (!lesson || completed) return;
-    toggle(lesson.key);
-    setXpBurst(true);
+    if (!lesson) return;
+
+    const firstCompletion = !completed;
+    if (firstCompletion) {
+      toggle(lesson.key);
+      setXpBurst(true);
+      setTimeout(() => setXpBurst(false), 1000);
+    }
+
+    setEarnedXp(firstCompletion);
     setShowResult(true);
-    setTimeout(() => setXpBurst(false), 1000);
   }, [lesson, completed, toggle]);
 
   const handleContinue = useCallback(() => {
@@ -81,6 +93,12 @@ export default function LessonPage() {
   if (!loaded || !userName || !week || !lesson || !prevComplete) return null;
 
   const gameId = getGameId(versionKey, weekId, lesson.sectionIndex, lesson.itemIndex);
+  const continueLabel =
+    weekId === 0
+      ? lessonIndex < allItems.length - 1
+        ? "ENTER NEXT ROOM"
+        : "RETURN TO LAB"
+      : "CONTINUE";
 
   const GAME_COMPONENTS: Record<string, React.ComponentType<{ onComplete: () => void; accent: string }>> = {
     "binary-counting": BinaryCountingGame,
@@ -88,6 +106,11 @@ export default function LessonPage() {
     "code-sorting": CodeSortingGame,
     "code-execution-chain": CodeExecutionChainGame,
     "code-everywhere-quiz": CodeEverywhereQuiz,
+    "byte-forge": ByteForgeGame,
+    "signal-tunnel": SignalTunnelGame,
+    "memory-vault": MemoryVaultGame,
+    "literal-bot-test": LiteralBotTestGame,
+    "launch-the-lab": LaunchTheLabGame,
   };
 
   const GameComponent = gameId ? GAME_COMPONENTS[gameId] : null;
@@ -109,10 +132,10 @@ export default function LessonPage() {
         <div className="lesson-progress-bar">
           <div
             className="lesson-progress-fill"
-            style={{ width: `${progressPercent}%`, background: week.accent }}
+            style={{ width: `${progressPercent}%`, background: week.accent, "--progress-color": week.accent } as React.CSSProperties}
           />
         </div>
-        <div className="lesson-xp-count" style={{ color: week.accent }}>
+        <div className={`lesson-xp-count${xpBurst ? " xp-counting" : ""}`} style={{ color: week.accent }}>
           {weekProgress.done * 10} XP
         </div>
       </div>
@@ -127,12 +150,18 @@ export default function LessonPage() {
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor" />
               </svg>
             </div>
-            <h2 className="lesson-result-title">Nice work!</h2>
-            <p className="lesson-result-xp" style={{ color: week.accent }}>+10 XP</p>
+            <h2 className="lesson-result-title">
+              {earnedXp ? "Nice work!" : "Replay complete!"}
+            </h2>
+            <p className="lesson-result-xp" style={{ color: week.accent }}>
+              {earnedXp ? "+10 XP" : "Progress already saved"}
+            </p>
             <p className="lesson-result-sub">
-              {lessonIndex < allItems.length - 1
+              {earnedXp
+                ? lessonIndex < allItems.length - 1
                 ? `${allItems.length - lessonIndex - 1} more ${allItems.length - lessonIndex - 1 === 1 ? "level" : "levels"} to go`
-                : "You've completed all levels this week!"}
+                : "You've completed all levels this week!"
+                : "You can come back and practise any completed activity anytime."}
             </p>
             <button
               className="lesson-continue-btn"
@@ -140,10 +169,10 @@ export default function LessonPage() {
               onClick={handleContinue}
               type="button"
             >
-              CONTINUE
+              {continueLabel}
             </button>
           </div>
-        ) : GameComponent && !completed ? (
+        ) : GameComponent ? (
           /* Interactive game */
           <>
             <div className="lesson-section-badge">

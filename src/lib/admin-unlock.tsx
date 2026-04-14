@@ -22,6 +22,7 @@ interface AdminUnlockState {
   isWeekAdminUnlocked: (weekNum: number) => boolean;
   weekLinks: Record<string, ResourceLink[]>;
   globalResources: GlobalResource[];
+  resourcesUnlocked: boolean;
 }
 
 const AdminUnlockContext = createContext<AdminUnlockState>({
@@ -30,12 +31,14 @@ const AdminUnlockContext = createContext<AdminUnlockState>({
   isWeekAdminUnlocked: () => false,
   weekLinks: {},
   globalResources: [],
+  resourcesUnlocked: false,
 });
 
 export function AdminUnlockProvider({ children }: { children: ReactNode }) {
   const [unlockedWeeks, setUnlockedWeeks] = useState<number[]>([]);
   const [weekLinks, setWeekLinks] = useState<Record<string, ResourceLink[]>>({});
   const [globalResources, setGlobalResources] = useState<GlobalResource[]>([]);
+  const [resourcesUnlocked, setResourcesUnlocked] = useState(false);
   const [adminLoaded, setAdminLoaded] = useState(false);
 
   useEffect(() => {
@@ -53,6 +56,9 @@ export function AdminUnlockProvider({ children }: { children: ReactNode }) {
         if (Array.isArray(data.globalResources)) {
           setGlobalResources(data.globalResources);
         }
+        if (typeof data.resourcesUnlocked === "boolean") {
+          setResourcesUnlocked(data.resourcesUnlocked);
+        }
       })
       .catch(() => {
         setUnlockedWeeks([1, 2, 3, 4, 5, 6]);
@@ -64,7 +70,7 @@ export function AdminUnlockProvider({ children }: { children: ReactNode }) {
     unlockedWeeks.includes(weekNum);
 
   return (
-    <AdminUnlockContext.Provider value={{ unlockedWeeks, adminLoaded, isWeekAdminUnlocked, weekLinks, globalResources }}>
+    <AdminUnlockContext.Provider value={{ unlockedWeeks, adminLoaded, isWeekAdminUnlocked, weekLinks, globalResources, resourcesUnlocked }}>
       {children}
     </AdminUnlockContext.Provider>
   );
