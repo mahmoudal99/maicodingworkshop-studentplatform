@@ -54,6 +54,8 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
   const target = TARGETS[round];
   const currentValue = bits.reduce((sum, active, index) => sum + (active ? POWERS[index] : 0), 0);
   const bitString = bits.map((bit) => (bit ? "1" : "0")).join("");
+  const doorState =
+    currentValue === target ? "match" : currentValue > target ? "overload" : currentValue > 0 ? "active" : "idle";
 
   useEffect(() => {
     const player = userName || "Engineer";
@@ -167,9 +169,9 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
       accent={accent}
       header={{ room: "Bit Reactor Corridor", step: `Door ${round + 1} of ${TARGETS.length}` }}
       missionTitle="Binary Door System"
-      missionObjective="Build the exact door code by flipping bit switches and watching the lock react in real time."
-      subtitle="Every switch adds its value to the lock. Match the number to open the corridor."
-      hint="Start with the largest values. If you overload the lock, turn off a bigger bit."
+      missionObjective="Flip the right bit switches to match the lock code and open the corridor."
+      subtitle="Each switch adds value to the lock. Match the number to open it."
+      hint="Start with the biggest values. If you overshoot, turn off a larger bit."
       companions={[
         {
           character: byteCharacter,
@@ -211,7 +213,6 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
               <span className="binary-door-readout-label">Current Total</span>
               <span
                 className={`binary-door-readout-value${outputPulse ? " binary-door-readout-value-pop" : ""}`}
-                style={{ color: currentValue === target ? accent : undefined }}
               >
                 {currentValue}
               </span>
@@ -226,6 +227,7 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
         className={`binary-door-room${overloaded ? " game-shake" : ""}${
           doorOpen ? " binary-door-room-open" : ""
         }`}
+        data-state={doorState}
       >
         <div className="binary-door-target-card">
           <span className="binary-door-target-label">Target Lock Code</span>
@@ -271,7 +273,6 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
             className="reactor-gauge-fill"
             style={{
               width: `${(currentValue / POWERS.reduce((sum, power) => sum + power, 0)) * 100}%`,
-              background: currentValue > target ? "#ef4444" : accent,
             }}
           />
           <div className="reactor-gauge-target" style={{ left: `${(target / 31) * 100}%` }} />

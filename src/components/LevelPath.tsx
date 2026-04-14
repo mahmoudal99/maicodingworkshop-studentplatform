@@ -20,7 +20,7 @@ const MACHINE_LAB_SECTION_COPY = [
 
 type PathTheme = "default" | "machine-lab";
 
-function NodeConnector({ fromOffset, toOffset, done, color }: { fromOffset: number; toOffset: number; done: boolean; color: string }) {
+function NodeConnector({ fromOffset, toOffset, done }: { fromOffset: number; toOffset: number; done: boolean }) {
   const dx = toOffset - fromOffset;
   // Vertical distance accounts for node height (~48px) + gap (8px for default, 14px for machine)
   const dy = 28;
@@ -42,7 +42,7 @@ function NodeConnector({ fromOffset, toOffset, done, color }: { fromOffset: numb
         x2={dx >= 0 ? Math.abs(dx) + 2 : 2}
         y2={dy}
         className={done ? "lp-connector-line-done" : "lp-connector-line"}
-        style={done ? { stroke: color } : undefined}
+        style={done ? { stroke: "var(--success-500)" } : undefined}
       />
     </svg>
   );
@@ -105,7 +105,7 @@ function LevelNode({
     >
       {/* Connector line from previous node */}
       {showConnector && (
-        <NodeConnector fromOffset={prevOffset} toOffset={offset} done={prevDone} color={sectionColor} />
+        <NodeConnector fromOffset={prevOffset} toOffset={offset} done={prevDone} />
       )}
 
       {/* START badge for the first active (unlocked incomplete) node */}

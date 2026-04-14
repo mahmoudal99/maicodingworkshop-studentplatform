@@ -212,9 +212,9 @@ export default function MemoryVaultGame({ onComplete, accent }: Props) {
       accent={accent}
       header={{ room: "Memory Vault", step: `${ramItems.length + storageItems.length} of ${MEMORY_ITEMS.length} files sorted` }}
       missionTitle="Memory Sorting Vault"
-      missionObjective="Sort live files into fast memory or long-term storage, then power off the machine to see what survives."
-      subtitle="The shutdown is the lesson: RAM clears when power drops, while storage keeps saved files."
-      hint="If the machine needs the file right now, it belongs in RAM. If it should still exist later, store it."
+      missionObjective="Sort live files into active memory or storage, then cut power to see what survives."
+      subtitle="Power-off is the lesson: RAM clears while storage stays."
+      hint="Need it now means RAM. Need it later means storage."
       companions={[
         {
           character: byteCharacter,

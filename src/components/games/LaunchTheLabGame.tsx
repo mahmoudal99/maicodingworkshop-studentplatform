@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import FbxAssetStage from "@/components/game/FbxAssetStage";
 import GameScene from "@/components/game/GameScene";
 import { useCompanion } from "@/lib/game/use-companion";
 import { useGameMeta } from "@/lib/game/use-game-meta";
@@ -36,6 +37,11 @@ interface BossStage {
 
 const BIT_POWERS = [8, 4, 2, 1];
 const SIGNAL_ORDER: SignalNodeId[] = ["input", "process", "output"];
+const FLEET_FLAGSHIP = {
+  name: "Praetor",
+  asset: "/Assets/Praetor.fbx",
+  role: "Command carrier holding orbit above The Core during the reboot.",
+};
 
 const STAGES: BossStage[] = [
   {
@@ -411,8 +417,8 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
       header={{ room: "The Core", step: `Boss ${Math.min(stageIndex + 1, STAGES.length)} of ${STAGES.length}` }}
       missionTitle="Boot the System"
       missionObjective={stage.objective}
-      subtitle="Reboot the whole machine-city by restoring power, memory, signal flow, and visible output."
-      hint="Each subsystem unlocks the next one. Watch the city react after every fix."
+      subtitle="Reboot the whole machine-city by restoring power, memory, signal flow, and output."
+      hint="Each subsystem unlocks the next one. Watch the city wake up after every fix."
       companions={[
         {
           character: byteCharacter,
@@ -427,11 +433,16 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
       ]}
       stability={{ stability, combo }}
       statusText={statusText}
-      controls={
-        <div className="boot-panel">
+        controls={
+          <div className="boot-panel">
           <div className="boot-card boot-mission-card">
             <span className="boot-kicker">Boss Objective</span>
             <strong>{stage.title}</strong>
+            <div className="boot-fleet-status">
+              <span className="boot-fleet-status-label">Command Carrier</span>
+              <strong>{FLEET_FLAGSHIP.name}</strong>
+              <small>{FLEET_FLAGSHIP.role}</small>
+            </div>
             <p>{stage.objective}</p>
             <div className="boot-progress-row">
               <div className="boot-progress-bar" aria-hidden="true">
@@ -523,14 +534,33 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
         </div>
       }
       footer={footer}
-    >
-      <div
-        ref={containerRef}
-        className={`boot-city${cityOnline ? " boot-city-online" : ""}${
-          wrongModule ? " game-shake" : ""
-        }`}
       >
-        <div className="boot-city-grid" aria-hidden="true" />
+        <div
+          ref={containerRef}
+          className={`boot-city${cityOnline ? " boot-city-online" : ""}${
+            wrongModule ? " game-shake" : ""
+          }`}
+        >
+          <div className="boot-city-grid" aria-hidden="true" />
+
+          <div className={`boot-flagship${repairedCount > 0 ? " boot-flagship-awake" : ""}${
+            cityOnline ? " boot-flagship-live" : ""
+          }`}>
+            <div className="boot-flagship-stage">
+              <FbxAssetStage
+                modelPath={FLEET_FLAGSHIP.asset}
+                accent={accent}
+                title={FLEET_FLAGSHIP.name}
+                variant="hero"
+                zoom={1.15}
+                modelRotation={[0.08, -0.42, 0]}
+              />
+            </div>
+            <div className="boot-flagship-label">
+              <span>{FLEET_FLAGSHIP.name}</span>
+              <small>Holding orbit</small>
+            </div>
+          </div>
 
         <div className="boot-skyline boot-skyline-top" aria-hidden="true">
           {Array.from({ length: 11 }, (_, index) => (

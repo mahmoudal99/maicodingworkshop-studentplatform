@@ -1,21 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0a0e1a;
-  --bg2: #111827;
-  --bg3: #1a2235;
-  --card: #141c2e;
-  --border: #1e2d47;
-  --green: #00ff87;
-  --green-dim: #00cc6a;
-  --green-glow: rgba(0,255,135,0.12);
-  --blue: #4a9eff;
-  --purple: #a78bfa;
-  --amber: #fbbf24;
-  --coral: #f87171;
-  --text: #e2e8f0;
-  --muted: #64748b;
-  --muted2: #94a3b8;
+  --bg-void: #070b14;
+  --bg-deep: #0d1424;
+  --surface-1: #111a2e;
+  --surface-2: #18243d;
+  --surface-3: #223255;
+  --surface-4: #2b3d66;
+  --panel-glass: rgba(17, 26, 46, 0.82);
+  --border-soft: #243654;
+  --border-strong: #33507d;
+  --text-primary: #f3f7ff;
+  --text-secondary: #a7b6d8;
+  --text-muted: #7f90b4;
+  --energy-500: #46d9ff;
+  --energy-700: #163e52;
+  --success-500: #3be67f;
+  --success-700: #143f2b;
+  --error-500: #ff6b6b;
+  --error-700: #4b1d24;
+  --data-500: #5fa8ff;
+  --data-700: #18335c;
+  --reward-500: #ffc94a;
+  --reward-700: #5b3d12;
+  --disabled-500: #5b6888;
+  --disabled-700: #222a3d;
+  --mystery-500: #8e7cff;
+  --mystery-700: #2a214f;
+  --bg: var(--bg-void);
+  --bg2: var(--surface-1);
+  --bg3: var(--surface-2);
+  --card: color-mix(in srgb, var(--surface-1) 86%, black 14%);
+  --border: var(--border-soft);
+  --green: var(--success-500);
+  --green-dim: #29c967;
+  --green-glow: color-mix(in srgb, var(--success-500) 18%, transparent);
+  --blue: var(--data-500);
+  --purple: var(--mystery-500);
+  --amber: var(--reward-500);
+  --coral: var(--error-500);
+  --text: var(--text-primary);
+  --muted: var(--text-muted);
+  --muted2: var(--text-secondary);
   --mono: var(--font-mono), 'Space Mono', monospace;
   --sans: var(--font-sans), 'DM Sans', sans-serif;
   --fg: var(--text);
@@ -24,14 +50,64 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html {
+  background: var(--bg-void);
+}
+
 body {
-  background: var(--bg);
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 22% 8%, color-mix(in srgb, var(--energy-500) 14%, transparent), transparent 28%),
+    radial-gradient(circle at 78% 14%, color-mix(in srgb, var(--reward-500) 10%, transparent), transparent 20%),
+    linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-void) 52%, #050814 100%);
   color: var(--text);
   font-family: var(--sans);
   font-size: 16px;
   line-height: 1.7;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
+  z-index: -2;
+  opacity: 0.14;
+  background-image: url("/Planets/p8.png"), url("/Planets/p1.png");
+  background-repeat: no-repeat, no-repeat;
+  background-size: clamp(240px, 24vw, 320px), clamp(280px, 28vw, 380px);
+  background-position: left -96px bottom 7%, right -136px top 7%;
+  filter: saturate(1.05);
+  animation: planet-drift 34s ease-in-out infinite alternate;
+}
+
+body::after {
+  z-index: -1;
+  background:
+    radial-gradient(circle at 20% 24%, rgba(255,255,255,0.08) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 74% 36%, rgba(255,255,255,0.06) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 56% 74%, rgba(255,255,255,0.08) 0 1px, transparent 1.5px),
+    linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.02) 100%);
+  background-size: 420px 420px, 520px 520px, 680px 680px, 100% 100%;
+  opacity: 0.35;
+  animation: atmosphere-drift 28s ease-in-out infinite alternate;
+}
+
+@keyframes planet-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(0, -10px, 0) scale(1.015); }
+}
+
+@keyframes atmosphere-drift {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, 12px, 0); }
 }
 
 /* ── PARTICLE CANVAS ── */
@@ -318,18 +394,37 @@ body {
   margin-bottom: 0.5rem;
 }
 .progress-track {
-  background: var(--bg3);
+  position: relative;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 88%, black 12%), var(--surface-1));
   border-radius: 6px;
   height: 8px;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 48%, transparent);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.38);
 }
 .progress-fill {
+  position: relative;
   height: 100%;
   border-radius: 6px;
-  background: linear-gradient(90deg, var(--green-dim), var(--green));
+  background: linear-gradient(90deg, var(--data-500), var(--energy-500) 58%, var(--success-500));
   width: 0%;
   transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--energy-500) 24%, transparent),
+    inset 0 0 12px color-mix(in srgb, white 18%, transparent);
+}
+
+.progress-fill::after {
+  content: "";
+  position: absolute;
+  right: -10px;
+  top: -1px;
+  bottom: -1px;
+  width: 18px;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 68%, var(--energy-500));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--energy-500) 46%, transparent);
 }
 
 /* ── WEEK GRID ── */
@@ -495,9 +590,41 @@ body {
   opacity: 0.7;
 }
 
+.week-hero-ship-stage {
+  width: 196px;
+  height: 190px;
+  opacity: 1;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+}
+
+.week-hero-ship-stage .fbx-asset-stage-hero {
+  min-height: 0;
+  height: 100%;
+}
+
+.week-hero-ship-label {
+  justify-self: center;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 28%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 86%, rgba(255,255,255,0.03));
+  color: var(--text-secondary);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 @media (max-width: 700px) {
   .week-hero { flex-direction: column; }
   .week-hero-svg { width: 120px; height: 120px; }
+  .week-hero-ship-stage {
+    width: min(100%, 212px);
+    height: 188px;
+  }
 }
 
 .week-hero-tag {
@@ -1213,10 +1340,13 @@ body {
 .lesson-progress-bar {
   flex: 1;
   height: 14px;
-  background: var(--bg3);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 92%, black 8%), var(--surface-1));
   border-radius: 100px;
   overflow: hidden;
   position: relative;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 48%, transparent);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.36);
 }
 
 .lesson-progress-fill {
@@ -1225,8 +1355,12 @@ body {
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   background: linear-gradient(90deg,
-    color-mix(in srgb, var(--progress-color, var(--green)) 70%, #000),
-    var(--progress-color, var(--green)));
+    color-mix(in srgb, var(--progress-color, var(--energy-500)) 35%, var(--data-500)),
+    var(--progress-color, var(--energy-500)),
+    color-mix(in srgb, var(--progress-color, var(--energy-500)) 44%, var(--success-500)));
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--progress-color, var(--energy-500)) 24%, transparent),
+    inset 0 0 12px color-mix(in srgb, white 14%, transparent);
 }
 
 /* Glowing leading edge */
@@ -1238,8 +1372,10 @@ body {
   bottom: 0;
   width: 16px;
   border-radius: 100px;
-  background: var(--progress-color, var(--green));
-  box-shadow: 0 0 10px var(--progress-color, var(--green)), 0 0 20px color-mix(in srgb, var(--progress-color, var(--green)) 40%, transparent);
+  background: color-mix(in srgb, white 58%, var(--progress-color, var(--energy-500)));
+  box-shadow:
+    0 0 12px var(--progress-color, var(--energy-500)),
+    0 0 24px color-mix(in srgb, var(--progress-color, var(--energy-500)) 42%, transparent);
   opacity: 0.8;
 }
 
@@ -1248,6 +1384,8 @@ body {
   font-size: 14px;
   font-weight: 800;
   flex-shrink: 0;
+  color: var(--reward-500);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--reward-500) 24%, transparent);
 }
 
 /* ── Main content area ── */
@@ -1493,8 +1631,14 @@ body {
 
 .lp-divider-line {
   flex: 1;
-  height: 1px;
-  background: var(--border);
+  height: 2px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--data-500) 18%, var(--border-soft)),
+      transparent
+    );
 }
 
 .lp-divider-label {
@@ -1502,10 +1646,14 @@ body {
   align-items: center;
   gap: 8px;
   padding: 0.5rem 1.25rem;
-  background: var(--card);
-  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 84%, rgba(255,255,255,0.03)), color-mix(in srgb, var(--surface-1) 92%, black 8%));
+  border: 1px solid color-mix(in srgb, var(--border-strong) 38%, transparent);
   border-radius: 100px;
   white-space: nowrap;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 10px 24px rgba(0,0,0,0.16);
 }
 
 .lp-divider-copy {
@@ -1515,7 +1663,9 @@ body {
 }
 
 .lp-divider-done {
-  background: linear-gradient(135deg, rgba(0,255,135,0.08), var(--card));
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--success-500) 18%, transparent), transparent 70%),
+    linear-gradient(135deg, color-mix(in srgb, var(--success-700) 60%, transparent), var(--card));
 }
 
 .lp-divider-icon {
@@ -1565,13 +1715,15 @@ body {
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 800;
-  color: #0a0e1a;
+  color: var(--bg-void);
   padding: 4px 16px;
   border-radius: 100px;
   margin-bottom: 8px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow:
+    0 6px 18px rgba(0,0,0,0.28),
+    0 0 20px color-mix(in srgb, var(--energy-500) 18%, transparent);
 }
 
 /* ── Node (holds bubble + tooltip) ── */
@@ -1590,9 +1742,10 @@ body {
   height: 64px;
   min-width: 64px;
   border-radius: 50%;
-  border: none;
-  background: var(--bg3);
-  color: var(--muted2);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 38%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-3) 90%, rgba(255,255,255,0.04)), color-mix(in srgb, var(--surface-1) 92%, black 8%));
+  color: var(--disabled-500);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1608,18 +1761,20 @@ body {
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.08);
   background:
-    radial-gradient(circle, color-mix(in srgb, var(--node-color) 18%, transparent), transparent 68%);
-  opacity: 0.65;
+    radial-gradient(circle, color-mix(in srgb, var(--node-color) 14%, transparent), transparent 68%);
+  opacity: 0.55;
   z-index: -1;
 }
 
 /* ── Active (next to complete) ── */
 .lp-bubble-active {
-  background: var(--node-color);
-  color: #0a0e1a;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--node-color) 62%, white 16%), var(--node-color));
+  color: var(--bg-void);
   box-shadow:
     0 6px 0 color-mix(in srgb, var(--node-color) 60%, #000),
-    0 0 28px var(--node-glow);
+    0 0 28px var(--node-glow),
+    inset 0 1px 0 rgba(255,255,255,0.2);
   transform: scale(1);
   animation: node-breathe 3s ease-in-out infinite;
 }
@@ -1667,13 +1822,14 @@ body {
 
 /* ── Done ── */
 .lp-bubble-done {
-  background: var(--node-color);
-  color: #0a0e1a;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--success-500) 64%, white 16%), var(--success-500));
+  color: var(--bg-void);
   box-shadow:
-    0 4px 0 color-mix(in srgb, var(--node-color) 50%, #000),
-    0 0 12px var(--node-glow),
-    inset 0 0 8px color-mix(in srgb, var(--node-color) 20%, transparent);
-  opacity: 0.85;
+    0 4px 0 color-mix(in srgb, var(--success-500) 50%, #000),
+    0 0 12px color-mix(in srgb, var(--success-500) 24%, transparent),
+    inset 0 0 8px color-mix(in srgb, var(--success-500) 20%, transparent);
+  opacity: 0.92;
   animation: node-load-in 0.4s ease-out both;
   animation-delay: calc(var(--node-index, 0) * 60ms);
 }
@@ -1685,11 +1841,14 @@ body {
 
 /* ── Locked ── */
 .lp-bubble-locked {
-  background: var(--bg3);
-  color: var(--muted);
-  box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--disabled-700) 88%, rgba(255,255,255,0.02)), color-mix(in srgb, var(--surface-1) 92%, black 8%));
+  color: var(--disabled-500);
+  box-shadow:
+    0 4px 0 rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.04);
   cursor: default;
-  opacity: 0.5;
+  opacity: 0.72;
 }
 
 .lp-bubble-locked:hover {
@@ -1700,10 +1859,13 @@ body {
   width: 148px;
   padding: 8px 10px;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 28%, transparent);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
   text-align: center;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 8px 20px rgba(0,0,0,0.12);
   transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
 }
 
@@ -1713,7 +1875,7 @@ body {
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--text-muted);
   margin-bottom: 4px;
 }
 
@@ -1726,12 +1888,14 @@ body {
 
 .lp-node-label-active {
   border-color: color-mix(in srgb, var(--node-color) 32%, var(--border));
-  background: color-mix(in srgb, var(--node-color) 10%, rgba(255,255,255,0.03));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--node-color) 14%, rgba(255,255,255,0.04)), rgba(255,255,255,0.03));
 }
 
 .lp-node-label-done {
-  border-color: color-mix(in srgb, var(--node-color) 28%, var(--border));
-  background: color-mix(in srgb, var(--node-color) 12%, rgba(255,255,255,0.03));
+  border-color: color-mix(in srgb, var(--success-500) 30%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--success-500) 12%, rgba(255,255,255,0.04)), rgba(255,255,255,0.03));
 }
 
 .lp-node-label-locked {
@@ -1755,7 +1919,7 @@ body {
     linear-gradient(
       90deg,
       transparent,
-      color-mix(in srgb, var(--purple) 22%, var(--border)),
+      color-mix(in srgb, var(--data-500) 22%, var(--border)),
       transparent
     );
 }
@@ -1766,7 +1930,7 @@ body {
   border-radius: 22px;
   white-space: normal;
   background:
-    radial-gradient(circle at top, rgba(167,139,250,0.10), transparent 65%),
+    radial-gradient(circle at top, color-mix(in srgb, var(--energy-500) 14%, transparent), transparent 65%),
     linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.05),
@@ -1796,8 +1960,8 @@ body {
   margin-right: 4px;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 28%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 86%, rgba(255,255,255,0.03));
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -1823,7 +1987,20 @@ body {
   border: 1px solid rgba(0,0,0,0.15);
   box-shadow:
     0 2px 8px rgba(0,0,0,0.28),
-    0 0 18px color-mix(in srgb, var(--purple) 18%, transparent);
+    0 0 18px color-mix(in srgb, var(--energy-500) 18%, transparent);
+}
+
+.lp-path-machine .lp-section:last-child .lp-node-wrapper:last-child .lp-bubble {
+  border-color: color-mix(in srgb, var(--reward-500) 44%, rgba(255,255,255,0.12));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--mystery-500) 12%, transparent),
+    0 8px 20px rgba(0,0,0,0.22);
+}
+
+.lp-path-machine .lp-section:last-child .lp-node-wrapper:last-child .lp-node-label {
+  border-color: color-mix(in srgb, var(--reward-500) 30%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--reward-500) 10%, rgba(255,255,255,0.04)), rgba(255,255,255,0.03));
 }
 
 /* ── Bounce animation ── */
@@ -2235,17 +2412,19 @@ body {
 }
 
 .game-btn {
-  padding: 14px 32px;
+  padding: 13px 28px;
   border: none;
   border-radius: 14px;
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #0a0e1a;
+  letter-spacing: 0.08em;
+  color: var(--bg-void);
   cursor: pointer;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+  box-shadow:
+    0 4px 0 rgba(0,0,0,0.25),
+    0 10px 24px rgba(0,0,0,0.16);
   transition: all 0.15s ease;
 }
 
@@ -2254,7 +2433,7 @@ body {
 
 .lab-panel {
   width: 100%;
-  padding: 1.25rem;
+  padding: 1.1rem;
   border-radius: 24px;
   border: 1px solid color-mix(in srgb, var(--game-accent, var(--purple)) 24%, var(--border));
   background:
@@ -2352,14 +2531,14 @@ body {
 }
 
 .lab-status {
-  min-height: 52px;
-  padding: 12px 14px;
+  min-height: 46px;
+  padding: 10px 12px;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.04);
   font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1.55;
   color: var(--muted2);
   display: flex;
   align-items: center;
@@ -3149,16 +3328,16 @@ body {
 
 .precision-panel {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
   height: 100%;
   align-content: start;
 }
 
 .precision-card {
   display: grid;
-  gap: 0.65rem;
-  padding: 0.95rem;
-  border-radius: 20px;
+  gap: 0.55rem;
+  padding: 0.85rem;
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.08);
   background: linear-gradient(180deg, rgba(12, 18, 34, 0.94), rgba(9, 14, 27, 0.82));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
@@ -3198,14 +3377,14 @@ body {
 
 .precision-choice-list {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 .precision-choice {
   display: grid;
   gap: 0.35rem;
-  padding: 0.9rem;
-  border-radius: 18px;
+  padding: 0.82rem;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.03);
   color: var(--text);
@@ -3363,6 +3542,75 @@ body {
     radial-gradient(circle at center, rgba(255,255,255,0.03) 0, transparent 52%),
     linear-gradient(180deg, transparent 72%, rgba(255,255,255,0.04) 100%);
   pointer-events: none;
+}
+
+.boot-flagship {
+  position: absolute;
+  left: 50%;
+  top: 13%;
+  z-index: 4;
+  width: clamp(150px, 18vw, 210px);
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  pointer-events: none;
+  opacity: 0.78;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.boot-flagship-awake {
+  opacity: 0.94;
+}
+
+.boot-flagship-live {
+  transform: translate(-50%, calc(-50% - 4px));
+}
+
+.boot-flagship-stage {
+  width: 100%;
+  height: 126px;
+}
+
+.boot-flagship-stage .fbx-asset-stage-hero {
+  min-height: 0;
+  height: 100%;
+}
+
+.boot-flagship-live .boot-flagship-stage .fbx-asset-stage-hero {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 0 30px color-mix(in srgb, var(--game-accent) 20%, transparent),
+    0 18px 30px rgba(0,0,0,0.22);
+}
+
+.boot-flagship-label {
+  display: grid;
+  justify-items: center;
+  gap: 0.08rem;
+  padding: 0.28rem 0.58rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 28%, transparent);
+  background: rgba(8, 13, 26, 0.78);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+}
+
+.boot-flagship-label span,
+.boot-flagship-label small {
+  font-family: var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.boot-flagship-label span {
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.boot-flagship-label small {
+  color: var(--muted2);
+  font-size: 9px;
 }
 
 .boot-skyline {
@@ -3798,16 +4046,16 @@ body {
 
 .boot-panel {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
   height: 100%;
   align-content: start;
 }
 
 .boot-card {
   display: grid;
-  gap: 0.65rem;
-  padding: 0.95rem;
-  border-radius: 20px;
+  gap: 0.55rem;
+  padding: 0.85rem;
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.08);
   background: linear-gradient(180deg, rgba(12, 18, 34, 0.94), rgba(9, 14, 27, 0.82));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
@@ -3818,6 +4066,31 @@ body {
   color: var(--muted2);
   font-size: 0.9rem;
   line-height: 1.45;
+}
+
+.boot-fleet-status {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--game-accent) 20%, rgba(255,255,255,0.08));
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--game-accent) 14%, transparent), transparent 72%),
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+}
+
+.boot-fleet-status-label {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.boot-fleet-status small {
+  color: var(--muted2);
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 .boot-kicker {
@@ -3856,7 +4129,10 @@ body {
 
 .boot-stage-list {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.55rem;
+  max-height: 246px;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 .boot-stage-item {
@@ -3864,7 +4140,7 @@ body {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.7rem;
   align-items: center;
-  padding: 0.72rem;
+  padding: 0.62rem;
   border-radius: 16px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.05);
@@ -3926,6 +4202,11 @@ body {
 @media (max-width: 720px) {
   .boot-city {
     min-height: 760px;
+  }
+
+  .boot-flagship {
+    top: 11%;
+    width: min(180px, 54vw);
   }
 
   .boot-skyline {
@@ -4636,16 +4917,18 @@ body {
 .section-progress-track {
   width: 48px;
   height: 4px;
-  background: var(--bg3);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
   border-radius: 2px;
   overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 42%, transparent);
 }
 
 .section-progress-fill {
   height: 100%;
-  background: var(--green);
+  background: linear-gradient(90deg, var(--data-500), var(--energy-500), var(--success-500));
   border-radius: 2px;
   transition: width 0.4s ease;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--energy-500) 24%, transparent);
 }
 
 /* ── Week progress ring (WeekCard) ── */
@@ -4673,16 +4956,18 @@ body {
 
 .week-hero-progress-track {
   height: 6px;
-  background: var(--bg3);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
   border-radius: 3px;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 42%, transparent);
 }
 
 .week-hero-progress-fill {
   height: 100%;
   border-radius: 3px;
   transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(90deg, var(--data-500), var(--energy-500) 58%, var(--success-500));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--energy-500) 22%, transparent);
 }
 
 /* ── Week complete badge ── */
@@ -4812,16 +5097,17 @@ body {
   overflow: visible;
 }
 .lp-connector-line {
-  stroke: var(--border);
+  stroke: color-mix(in srgb, var(--disabled-500) 56%, var(--border-soft));
   stroke-width: 2;
   stroke-dasharray: 6 4;
   fill: none;
-  opacity: 0.4;
+  opacity: 0.55;
 }
 .lp-connector-line-done {
-  stroke: var(--node-color, var(--green));
+  stroke: var(--success-500);
   stroke-dasharray: none;
-  opacity: 0.6;
+  opacity: 0.88;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--success-500) 24%, transparent));
 }
 
 /* ═══════════════════════════════════════════════════
@@ -4835,7 +5121,7 @@ body {
 }
 
 .mission-panel {
-  gap: 1.1rem;
+  gap: 0.95rem;
 }
 
 .mission-header {
@@ -4844,15 +5130,15 @@ body {
 
 .mission-copy-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.75fr) minmax(280px, 0.65fr);
-  gap: 1.2rem;
+  grid-template-columns: minmax(0, 1.85fr) minmax(260px, 0.58fr);
+  gap: 1rem;
   align-items: start;
 }
 
 .mission-copy-stack {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.35rem;
 }
 
 .mission-kicker {
@@ -4874,13 +5160,13 @@ body {
 }
 
 .mission-subtitle {
-  padding: 0.85rem 1rem;
+  padding: 0.72rem 0.92rem;
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--game-accent, var(--purple)) 18%, transparent);
   background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
   color: var(--muted2);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .mission-stage {
@@ -4890,7 +5176,7 @@ body {
 }
 
 .mission-stage-with-controls {
-  grid-template-columns: minmax(0, 2.2fr) minmax(320px, 0.82fr);
+  grid-template-columns: minmax(0, 2.35fr) minmax(300px, 0.78fr);
 }
 
 .mission-stage-main,
@@ -4899,7 +5185,7 @@ body {
 }
 
 .mission-stage-main {
-  min-height: 560px;
+  min-height: 600px;
   position: relative;
 }
 
@@ -4907,14 +5193,28 @@ body {
   border-radius: 22px;
   border: 1px solid rgba(255,255,255,0.08);
   background: linear-gradient(180deg, rgba(8, 13, 26, 0.82), rgba(8, 13, 26, 0.56));
-  padding: 1rem;
+  padding: 0.92rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.85rem;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-  height: 100%;
+  align-self: start;
+  width: 100%;
+  max-height: min(720px, calc(100vh - 170px));
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.mission-stage-controls::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mission-stage-controls::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
 }
 
 .mission-status-group {
@@ -4958,9 +5258,15 @@ body {
 }
 
 .mission-hint {
+  justify-self: center;
+  max-width: 64ch;
+  padding: 0.48rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
   font-family: var(--mono);
   font-size: 11px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--muted);
   text-align: center;
 }
@@ -5204,9 +5510,11 @@ body {
 
 .stability-bar-track {
   height: 6px;
-  background: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 90%, black 10%), var(--surface-1));
   border-radius: 3px;
   overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 34%, transparent);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.34);
 }
 
 .stability-bar-fill {
@@ -5263,8 +5571,9 @@ body {
   width: 72px;
   height: 5px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 90%, black 10%), var(--surface-1));
   overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 32%, transparent);
 }
 
 .stability-combo-fill {
@@ -5395,10 +5704,11 @@ body {
 
 /* ── Reactor Cell (for BinaryCountingGame redesign) ── */
 .reactor-cell {
+  --reactor-active-color: var(--energy-500);
   position: relative;
   width: 56px;
   height: 72px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid color-mix(in srgb, var(--border-strong) 34%, transparent);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -5410,6 +5720,9 @@ body {
   overflow: hidden;
   user-select: none;
   touch-action: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 10px 20px rgba(0,0,0,0.14);
 }
 
 .reactor-cell::before {
@@ -5419,7 +5732,7 @@ body {
   left: 0;
   right: 0;
   height: 0%;
-  background: linear-gradient(to top, var(--game-accent), color-mix(in srgb, var(--game-accent) 40%, transparent));
+  background: linear-gradient(to top, var(--reactor-active-color), color-mix(in srgb, var(--reactor-active-color) 40%, transparent));
   transition: height 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   border-radius: 0 0 6px 6px;
 }
@@ -5429,9 +5742,10 @@ body {
 }
 
 .reactor-cell-on {
-  border-color: var(--game-accent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--game-accent) 30%, transparent),
-              inset 0 0 8px color-mix(in srgb, var(--game-accent) 15%, transparent);
+  border-color: var(--reactor-active-color);
+  box-shadow:
+    0 0 16px color-mix(in srgb, var(--reactor-active-color) 30%, transparent),
+    inset 0 0 8px color-mix(in srgb, var(--reactor-active-color) 15%, transparent);
 }
 
 .reactor-cell-value {
@@ -5477,7 +5791,7 @@ body {
 
 .reactor-output-pop {
   transform: scale(1.3);
-  color: var(--game-accent);
+  color: var(--binary-state-color, var(--energy-500));
 }
 
 .reactor-output-label {
@@ -5491,17 +5805,19 @@ body {
 .reactor-gauge {
   position: relative;
   height: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 92%, black 8%), var(--surface-1));
   border-radius: 4px;
   overflow: hidden;
   margin: 8px 0;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 34%, transparent);
 }
 
 .reactor-gauge-fill {
   height: 100%;
   border-radius: 4px;
-  background: var(--game-accent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--binary-state-color, var(--data-500)) 36%, var(--data-700)), var(--binary-state-color, var(--energy-500)));
   transition: width 0.35s ease-out;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--binary-state-color, var(--energy-500)) 24%, transparent);
 }
 
 .reactor-gauge-target {
@@ -5509,9 +5825,9 @@ body {
   top: -3px;
   bottom: -3px;
   width: 3px;
-  background: #fff;
+  background: var(--reward-500);
   border-radius: 2px;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--reward-500) 46%, transparent);
   transition: left 0.3s ease;
 }
 
@@ -6017,16 +6333,16 @@ body {
 
 .detective-panel {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
   height: 100%;
   align-content: start;
 }
 
 .detective-card {
   display: grid;
-  gap: 0.65rem;
-  padding: 0.95rem;
-  border-radius: 20px;
+  gap: 0.55rem;
+  padding: 0.85rem;
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.08);
   background: linear-gradient(180deg, rgba(12, 18, 34, 0.94), rgba(9, 14, 27, 0.82));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
@@ -6074,7 +6390,7 @@ body {
 
 .detective-tools-grid {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 .detective-stamp {
@@ -6127,7 +6443,10 @@ body {
 
 .detective-evidence-list {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.55rem;
+  max-height: 246px;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 .detective-evidence-item {
@@ -6135,7 +6454,7 @@ body {
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 0.7rem;
   align-items: center;
-  padding: 0.72rem;
+  padding: 0.62rem;
   border-radius: 16px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.05);
@@ -6265,6 +6584,7 @@ body {
 
 /* ── Binary Door System ── */
 .binary-door-room {
+  --binary-state-color: var(--data-500);
   position: relative;
   min-height: 100%;
   display: grid;
@@ -6273,10 +6593,23 @@ body {
   padding: 1rem;
   border-radius: 24px;
   background:
-    radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--game-accent) 20%, transparent), transparent 42%),
+    radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--energy-500) 14%, transparent), transparent 42%),
+    radial-gradient(circle at 20% 84%, color-mix(in srgb, var(--data-500) 10%, transparent), transparent 32%),
     linear-gradient(180deg, rgba(8, 15, 29, 0.96), rgba(7, 12, 24, 0.82));
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 28%, transparent);
   overflow: hidden;
+}
+
+.binary-door-room[data-state="active"] {
+  --binary-state-color: var(--energy-500);
+}
+
+.binary-door-room[data-state="match"] {
+  --binary-state-color: var(--success-500);
+}
+
+.binary-door-room[data-state="overload"] {
+  --binary-state-color: var(--error-500);
 }
 
 .binary-door-target-card {
@@ -6287,8 +6620,13 @@ body {
   gap: 0.2rem;
   padding: 0.9rem 1.3rem;
   border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--game-accent) 18%, rgba(255,255,255,0.08));
-  background: rgba(255,255,255,0.04);
+  border: 1px solid color-mix(in srgb, var(--reward-500) 24%, rgba(255,255,255,0.08));
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--reward-500) 18%, transparent), transparent 72%),
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  box-shadow:
+    0 12px 26px rgba(0,0,0,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 .binary-door-target-label,
@@ -6298,15 +6636,15 @@ body {
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .binary-door-target-value {
   font-family: var(--mono);
   font-size: clamp(38px, 8vw, 54px);
   line-height: 1;
-  color: #fff;
-  text-shadow: 0 0 22px color-mix(in srgb, var(--game-accent) 45%, transparent);
+  color: var(--reward-500);
+  text-shadow: 0 0 22px color-mix(in srgb, var(--reward-500) 36%, transparent);
 }
 
 .binary-door-frame {
@@ -6321,7 +6659,7 @@ body {
   width: min(100%, 520px);
   height: 260px;
   border-radius: 28px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 32%, rgba(255,255,255,0.08));
   background:
     linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)),
     linear-gradient(135deg, rgba(17, 24, 39, 0.98), rgba(9, 14, 27, 0.94));
@@ -6355,7 +6693,7 @@ body {
   border-radius: 20px;
   background:
     linear-gradient(180deg, rgba(33, 48, 78, 0.98), rgba(16, 25, 46, 0.96));
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 24%, rgba(255,255,255,0.06));
   transition: transform 650ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 280ms ease;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
@@ -6365,7 +6703,7 @@ body {
   position: absolute;
   inset: 20px;
   border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--game-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--binary-state-color) 16%, transparent);
 }
 
 .binary-door-panel-left {
@@ -6378,12 +6716,12 @@ body {
 
 .binary-door-panel-left.binary-door-panel-slide {
   transform: translateX(-92%);
-  box-shadow: 0 0 30px color-mix(in srgb, var(--game-accent) 12%, transparent);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--success-500) 14%, transparent);
 }
 
 .binary-door-panel-right.binary-door-panel-slide {
   transform: translateX(92%);
-  box-shadow: 0 0 30px color-mix(in srgb, var(--game-accent) 12%, transparent);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--success-500) 14%, transparent);
 }
 
 .binary-door-bolts {
@@ -6433,8 +6771,8 @@ body {
 .binary-door-core-value {
   font-family: var(--mono);
   font-size: clamp(44px, 9vw, 66px);
-  color: #fff;
-  text-shadow: 0 0 26px color-mix(in srgb, var(--game-accent) 38%, transparent);
+  color: var(--binary-state-color);
+  text-shadow: 0 0 26px color-mix(in srgb, var(--binary-state-color) 30%, transparent);
 }
 
 .binary-door-rails {
@@ -6451,9 +6789,10 @@ body {
 .binary-door-rail {
   height: 10px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.08);
+  background: color-mix(in srgb, var(--surface-2) 82%, rgba(255,255,255,0.06));
   overflow: hidden;
   position: relative;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 18%, transparent);
 }
 
 .binary-door-rail::after {
@@ -6461,13 +6800,13 @@ body {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, var(--game-accent), transparent);
+  background: linear-gradient(90deg, transparent, var(--binary-state-color), transparent);
   opacity: 0;
 }
 
 .binary-door-rail-on {
-  background: color-mix(in srgb, var(--game-accent) 28%, rgba(255,255,255,0.08));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--game-accent) 20%, transparent);
+  background: color-mix(in srgb, var(--binary-state-color) 28%, rgba(255,255,255,0.08));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--binary-state-color) 20%, transparent);
 }
 
 .binary-door-rail-on::after {
@@ -6496,8 +6835,12 @@ body {
   gap: 0.8rem;
   padding: 1rem;
   border-radius: 18px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border: 1px solid color-mix(in srgb, var(--border-strong) 28%, rgba(255,255,255,0.06));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 10px 22px rgba(0,0,0,0.14);
 }
 
 .binary-door-readout-row {
@@ -6511,12 +6854,28 @@ body {
   font-family: var(--mono);
   font-size: 22px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--text-primary);
   transition: transform 180ms ease, color 180ms ease;
 }
 
 .binary-door-readout-value-pop {
   transform: scale(1.12);
+}
+
+.binary-door-room .binary-door-readout-row:last-child .binary-door-readout-value {
+  color: var(--binary-state-color);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--binary-state-color) 18%, transparent);
+}
+
+.binary-door-room[data-state="match"] .binary-door-bolt {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--success-500) 30%, white), color-mix(in srgb, var(--success-700) 40%, var(--success-500)));
+}
+
+.binary-door-room[data-state="overload"] .binary-door-shell,
+.binary-door-room[data-state="overload"] .binary-door-readout {
+  box-shadow:
+    0 0 26px color-mix(in srgb, var(--error-500) 12%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 @keyframes binary-rail-flow {
@@ -7334,6 +7693,61 @@ body {
 }
 
 /* ── Spaceship Command Game ── */
+.fbx-asset-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.fbx-asset-stage-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.fbx-asset-stage-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(180deg, rgba(9, 15, 29, 0.82), rgba(8, 13, 26, 0.58));
+  color: var(--text-secondary);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+}
+
+.fbx-asset-stage[data-state="ready"] .fbx-asset-stage-overlay {
+  opacity: 0;
+}
+
+.fbx-asset-stage-hero {
+  min-height: 148px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--game-accent, var(--energy-500)) 22%, rgba(255,255,255,0.08));
+  background:
+    radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--game-accent, var(--energy-500)) 16%, transparent), transparent 42%),
+    linear-gradient(180deg, rgba(11, 18, 34, 0.95), rgba(7, 12, 24, 0.92));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 16px 30px rgba(0,0,0,0.22);
+}
+
+.fbx-asset-stage-board {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--game-accent, var(--energy-500)) 18%, transparent), transparent 56%),
+    linear-gradient(180deg, rgba(12, 18, 34, 0.98), rgba(8, 13, 26, 0.92));
+}
+
 .spacegame-board-wrap {
   min-height: 100%;
   padding: 1rem;
@@ -7466,27 +7880,61 @@ body {
 .spacegame-ship {
   position: absolute;
   z-index: 4;
+  width: 76px;
+  height: 76px;
   transition:
     left 380ms cubic-bezier(0.22, 1, 0.36, 1),
     top 380ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 260ms ease;
   transform-origin: center center;
+  will-change: left, top, transform;
 }
 
-.spacegame-ship-body {
-  display: block;
-  font-size: clamp(24px, 2.5vw, 34px);
-  filter: drop-shadow(0 6px 10px rgba(0,0,0,0.4));
+.spacegame-ship-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 7px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 24%, color-mix(in srgb, var(--game-accent, var(--energy-500)) 16%, transparent), transparent 48%),
+    linear-gradient(180deg, rgba(12, 18, 34, 0.92), rgba(8, 13, 26, 0.82));
+  border: 1px solid color-mix(in srgb, var(--game-accent, var(--energy-500)) 22%, rgba(255,255,255,0.08));
+  box-shadow:
+    0 12px 24px rgba(0,0,0,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  pointer-events: none;
 }
 
-.spacegame-ship-flying .spacegame-ship-body {
+.spacegame-ship-thruster {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: -8px;
+  height: 18px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--reward-500) 78%, white 18%) 0%, color-mix(in srgb, var(--game-accent, var(--energy-500)) 42%, transparent) 54%, transparent 76%);
+  filter: blur(8px);
+  opacity: 0.72;
+  transform: scaleY(0.9);
+  transition: opacity 180ms ease, transform 180ms ease;
+  pointer-events: none;
+}
+
+.spacegame-ship-flying .spacegame-ship-shell {
   animation: ship-thrust 420ms ease-in-out infinite alternate;
+}
+
+.spacegame-ship-flying .spacegame-ship-thruster {
+  opacity: 1;
+  transform: scaleY(1.22);
 }
 
 .spacegame-panel {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 1rem;
+  gap: 0.85rem;
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -7495,8 +7943,8 @@ body {
 .spacegame-mission-card {
   display: grid;
   gap: 0.35rem;
-  padding: 1rem;
-  border-radius: 18px;
+  padding: 0.85rem;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.04);
 }
@@ -7515,6 +7963,42 @@ body {
   color: var(--text);
 }
 
+.spacegame-mission-ship {
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: stretch;
+  margin: 0.2rem 0 0.1rem;
+}
+
+.spacegame-mission-ship-stage {
+  min-height: 148px;
+}
+
+.spacegame-mission-ship-copy {
+  display: grid;
+  align-content: center;
+  gap: 0.2rem;
+}
+
+.spacegame-mission-ship-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.spacegame-mission-ship-copy strong {
+  font-size: 16px;
+}
+
+.spacegame-mission-ship-copy small {
+  color: var(--muted2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .spacegame-mission-card p {
   color: var(--muted2);
   font-size: 13px;
@@ -7527,7 +8011,7 @@ body {
 
 .spacegame-command-bank {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 .spacegame-command-chip {
@@ -7535,8 +8019,8 @@ body {
   grid-template-columns: auto 1fr;
   gap: 0.75rem;
   align-items: center;
-  padding: 0.8rem 0.9rem;
-  border-radius: 16px;
+  padding: 0.72rem 0.8rem;
+  border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.03);
   color: var(--text);
@@ -7599,7 +8083,7 @@ body {
 .spacegame-queue-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
-  gap: 0.65rem;
+  gap: 0.55rem;
   align-content: start;
   min-height: 0;
   max-height: 100%;
@@ -7621,11 +8105,11 @@ body {
   position: relative;
   display: grid;
   grid-template-rows: auto auto auto auto;
-  gap: 0.45rem;
+  gap: 0.35rem;
   align-items: start;
   justify-items: start;
-  min-height: 122px;
-  padding: 0.75rem;
+  min-height: 108px;
+  padding: 0.65rem;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.03);
@@ -7763,6 +8247,14 @@ body {
 @media (max-width: 980px) {
   .spacegame-board {
     width: 100%;
+  }
+
+  .spacegame-mission-ship {
+    grid-template-columns: 1fr;
+  }
+
+  .spacegame-mission-ship-stage {
+    min-height: 132px;
   }
 }
 

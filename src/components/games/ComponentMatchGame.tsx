@@ -243,9 +243,9 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
       accent={accent}
       header={{ room: "Parts Bay", step: `${Object.keys(placedParts).length} of ${PARTS.length} parts installed` }}
       missionTitle="Computer Builder"
-      missionObjective="Assemble a broken workstation by placing the right hardware into the motherboard, then run a power test."
-      subtitle="The lesson happens during assembly: each part wakes a different system inside the machine."
-      hint="Think about the job. CPU does the processing, RAM holds active work, storage saves files, input brings signals in, and output shows results."
+      missionObjective="Place the right hardware on the board, then run a power test."
+      subtitle="Each part wakes a different system inside the machine."
+      hint="CPU processes. RAM holds active work. Storage saves. Input sends in. Output shows out."
       companions={[
         {
           character: byteCharacter,

@@ -426,8 +426,8 @@ export default function CodeEverywhereQuiz({ onComplete, accent }: Props) {
       header={{ room: "Code Detective Bay", step: `Case ${round + 1} of ${MISSIONS.length}` }}
       missionTitle="Code Detective"
       missionObjective={mission.objective}
-      subtitle="Sweep the room, reveal what is inside each object, then stamp the evidence board."
-      hint="Scan first, then tag. Live control signals mean code. Pure materials mean no code."
+      subtitle="Sweep the room, reveal what is inside, then stamp the evidence board."
+      hint="Scan first, then tag. Live signals mean code. Pure materials mean no code."
       companions={[
         {
           character: byteCharacter,

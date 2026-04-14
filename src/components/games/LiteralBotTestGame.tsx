@@ -505,8 +505,8 @@ export default function LiteralBotTestGame({ onComplete, accent }: Props) {
       header={{ room: "Precision Bot Bay", step: `Test ${round + 1} of ${MISSIONS.length}` }}
       missionTitle="Precision Bot"
       missionObjective={mission.objective}
-      subtitle="Choose an instruction, then watch the bot follow it literally in the room."
-      hint="Name the exact thing and the exact destination. Bots do not guess hidden meaning."
+      subtitle="Choose an instruction, then watch the bot follow it literally."
+      hint="Name the exact thing and the exact destination. Bots do not guess."
       companions={[
         {
           character: byteCharacter,

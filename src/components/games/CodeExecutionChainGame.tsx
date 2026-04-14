@@ -354,8 +354,8 @@ export default function CodeExecutionChainGame({ onComplete, accent }: Props) {
       header={{ room: "Terminal Tower", step: `Script ${round + 1} of ${MISSIONS.length}` }}
       missionTitle="3D Code Terminal Experience"
       missionObjective={mission.objective}
-      subtitle="Pick a tiny code snippet, execute it, and watch it turn into tokens, binary pulses, CPU work, and output."
-      hint={`The correct repair should make the output monitor show ${mission.targetOutput}.`}
+      subtitle="Pick a tiny code snippet and watch it become tokens, machine signals, CPU work, and output."
+      hint={`The right repair makes the monitor show ${mission.targetOutput}.`}
       companions={[
         {
           character: byteCharacter,

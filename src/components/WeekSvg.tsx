@@ -1,3 +1,7 @@
+"use client";
+
+import FbxAssetStage from "@/components/game/FbxAssetStage";
+
 interface Props {
   weekNum: string;
   accent: string;
@@ -26,6 +30,22 @@ function getSvgKey(weekNum: string, versionKey: string): string {
 
 export default function WeekSvg({ weekNum, accent, versionKey }: Props) {
   const key = getSvgKey(weekNum, versionKey);
+
+  if (key === "computers-think") {
+    return (
+      <div className="week-hero-svg week-hero-ship-stage">
+        <FbxAssetStage
+          modelPath="/Assets/Centurion.fbx"
+          accent={accent}
+          title="Centurion"
+          variant="hero"
+          zoom={1.05}
+          modelRotation={[0.08, -0.48, 0]}
+        />
+        <span className="week-hero-ship-label">Centurion // Living Lab Carrier</span>
+      </div>
+    );
+  }
 
   const svgs: Record<string, React.ReactNode> = {
     "computers-think": (

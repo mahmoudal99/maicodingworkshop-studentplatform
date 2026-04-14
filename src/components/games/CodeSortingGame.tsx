@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import GameScene from "@/components/game/GameScene";
+import FbxAssetStage from "@/components/game/FbxAssetStage";
 import { useCompanion } from "@/lib/game/use-companion";
 import { useGameMeta } from "@/lib/game/use-game-meta";
 import { useParticles } from "@/lib/game/use-particles";
@@ -31,6 +32,9 @@ interface Mission {
   id: string;
   title: string;
   objective: string;
+  shipName: string;
+  shipAsset: string;
+  shipRole: string;
   size: number;
   start: Position;
   goal: GridPoint;
@@ -90,6 +94,9 @@ const MISSIONS: Mission[] = [
     id: "signal-canyon",
     title: "Cross Signal Canyon",
     objective: "Guide the scout ship around the broken relay wall and dock at the beacon on the far side.",
+    shipName: "Kingfisher",
+    shipAsset: "/Assets/Kingfisher.fbx",
+    shipRole: "Scout hull tuned for clean turns and narrow relay lanes.",
     size: 7,
     start: { x: 0, y: 4, dir: "E" },
     goal: { x: 6, y: 5 },
@@ -110,6 +117,9 @@ const MISSIONS: Mission[] = [
     id: "asteroid-switchback",
     title: "Asteroid Switchback",
     objective: "Thread through the asteroid field and dock at the upper beacon without hitting debris.",
+    shipName: "Icarus",
+    shipAsset: "/Assets/Icarus.fbx",
+    shipRole: "Pathfinder frame built for precise switchbacks through dense fields.",
     size: 8,
     start: { x: 1, y: 6, dir: "N" },
     goal: { x: 6, y: 1 },
@@ -133,6 +143,9 @@ const MISSIONS: Mission[] = [
     id: "boost-gate",
     title: "Boost Gate Run",
     objective: "Use a boost command to clear the long corridor and hit the final dock dramatically.",
+    shipName: "Stormspike",
+    shipAsset: "/Assets/Stormspike.fbx",
+    shipRole: "High-thrust runner made for boost corridors and dramatic docking runs.",
     size: 8,
     start: { x: 0, y: 4, dir: "E" },
     goal: { x: 7, y: 1 },
@@ -181,10 +194,11 @@ function cellKey(point: GridPoint) {
 }
 
 function directionRotation(dir: Direction) {
-  if (dir === "N") return -90;
-  if (dir === "E") return 0;
-  if (dir === "S") return 90;
-  return 180;
+  // The tactical ship model faces north in its unrotated board view.
+  if (dir === "N") return 0;
+  if (dir === "E") return 90;
+  if (dir === "S") return 180;
+  return -90;
 }
 
 export default function CodeSortingGame({ onComplete, accent }: Props) {
@@ -450,8 +464,8 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
         header={{ room: "Navigation Deck", step: `Route ${round + 1} of ${MISSIONS.length}` }}
         missionTitle="Spaceship Command Game"
         missionObjective={mission.objective}
-        subtitle="Build the flight plan first, then watch the ship obey every command in order."
-        hint="Turns change direction, not position. Forward moves one tile. Boost moves two tiles."
+        subtitle="Build the flight plan, then watch the ship obey it step by step."
+        hint="Turns change direction. Forward moves one tile. Boost moves two."
         companions={[
           {
             character: byteCharacter,
@@ -471,6 +485,23 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
             <div className="spacegame-mission-card">
               <span className="spacegame-mission-kicker">Mission</span>
               <strong>{mission.title}</strong>
+              <div className="spacegame-mission-ship">
+                <div className="spacegame-mission-ship-stage">
+                  <FbxAssetStage
+                    modelPath={mission.shipAsset}
+                    accent={accent}
+                    title={mission.shipName}
+                    variant="hero"
+                    zoom={1.1}
+                    modelRotation={[0.1, -0.55, 0]}
+                  />
+                </div>
+                <div className="spacegame-mission-ship-copy">
+                  <span className="spacegame-mission-ship-label">Scout Frame</span>
+                  <strong>{mission.shipName}</strong>
+                  <small>{mission.shipRole}</small>
+                </div>
+              </div>
               <p>{mission.objective}</p>
               <span className="spacegame-mission-limit">Queue limit: {mission.maxCommands}</span>
             </div>
@@ -588,7 +619,19 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
               }}
               aria-label="Scout ship"
             >
-              <span className="spacegame-ship-body">🚀</span>
+              <div className="spacegame-ship-shell">
+                <FbxAssetStage
+                  modelPath={mission.shipAsset}
+                  accent={accent}
+                  title={mission.shipName}
+                  variant="board"
+                  zoom={1.08}
+                  autoRotate={false}
+                  float={false}
+                  modelRotation={[0, Math.PI / 2, 0]}
+                />
+              </div>
+              <span className="spacegame-ship-thruster" aria-hidden="true" />
             </div>
           </div>
         </div>
