@@ -1,6 +1,7 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import Companion from "./Companion";
 import StabilityBar from "./StabilityBar";
 import type { CompanionMood } from "@/lib/game/use-companion";
@@ -112,21 +113,25 @@ export default function GameScene({
           {hint && !footer && <div className="mission-hint">Hint: {hint}</div>}
         </div>
 
-        {footer && (
-          <div className="mission-footer" aria-live="polite">
-            <div className="mission-footer-card">
-              <div className="mission-footer-copy">
-                <span className="mission-footer-kicker">Next Room Ready</span>
-                <strong className="mission-footer-title">{header.room} restored</strong>
-                <p className="mission-footer-text">
-                  The repair is locked in. Keep moving while the momentum is hot.
-                </p>
-              </div>
-              <div className="mission-footer-action">{footer}</div>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Portal the bottom bar to document.body so it's truly fixed, not clipped by .lesson-page overflow */}
+      {footer && typeof document !== "undefined" && createPortal(
+        <div className="mission-bottom-bar" aria-live="polite" style={{ "--game-accent": accent } as CSSProperties}>
+          <div className="mission-bottom-bar-inner">
+            <div className="mission-bottom-bar-status">
+              <div className="mission-bottom-bar-icon mission-bottom-bar-icon-success">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <span className="mission-bottom-bar-label">Amazing!</span>
+            </div>
+            <div className="mission-bottom-bar-action">{footer}</div>
+          </div>
+        </div>,
+        document.body
+      )}
     </section>
   );
 }

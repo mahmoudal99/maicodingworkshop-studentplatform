@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 export type CompanionMood = "neutral" | "happy" | "alert" | "thinking";
 
 export function useCompanion(character: "byte" | "echo" = "byte") {
   const [dialogue, setDialogue] = useState<string | null>(null);
   const [mood, setMood] = useState<CompanionMood>("neutral");
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const say = useCallback((text: string, duration = 3000) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+  const say = useCallback((text: string, _duration = 3000) => {
     setDialogue(text);
-    timerRef.current = setTimeout(() => setDialogue(null), duration);
   }, []);
 
   const celebrate = useCallback(

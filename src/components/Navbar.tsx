@@ -1,15 +1,31 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/lib/store";
+import { getCurrentStreak } from "@/lib/streak";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { userName } = useUser();
+  const [streak, setStreak] = useState(0);
 
   // Don't render on the onboarding page
   if (pathname === "/") return null;
+
+  useEffect(() => {
+    const syncStreak = () => setStreak(getCurrentStreak());
+
+    syncStreak();
+    window.addEventListener("focus", syncStreak);
+    document.addEventListener("visibilitychange", syncStreak);
+
+    return () => {
+      window.removeEventListener("focus", syncStreak);
+      document.removeEventListener("visibilitychange", syncStreak);
+    };
+  }, [pathname]);
 
   return (
     <nav className="site-nav">
@@ -17,7 +33,16 @@ export default function Navbar() {
         TLP_
       </Link>
       <div className="nav-greeting">
-        Hey, <span>{userName}</span>
+        <span className="nav-greeting-copy">
+          Hey, <span className="nav-greeting-name">{userName}</span>
+        </span>
+        <div className="nav-streak" aria-label={`${streak} day streak`}>
+          <span className="nav-streak-emoji" aria-hidden="true">
+            🔥
+          </span>
+          <span className="nav-streak-count">{streak}</span>
+          <span className="nav-streak-label">day streak</span>
+        </div>
       </div>
       <ul className="nav-links">
         <li>
@@ -26,6 +51,14 @@ export default function Navbar() {
             className={pathname === "/dashboard" ? "active" : ""}
           >
             Dashboard
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/leaderboard"
+            className={pathname === "/leaderboard" ? "active" : ""}
+          >
+            Leaderboard
           </Link>
         </li>
         <li>

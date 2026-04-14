@@ -7,13 +7,15 @@ import { useUser } from "@/lib/store";
 import { useProgress } from "@/lib/progress";
 import { useAdminUnlock } from "@/lib/admin-unlock";
 import { WEEKS_A, WEEKS_B } from "@/lib/data";
+import { syncLeaderboard } from "@/lib/leaderboard-client";
+import { getCurrentStreak } from "@/lib/streak";
 import Navbar from "@/components/Navbar";
 import WeekCard from "@/components/WeekCard";
 import RevealOnScroll from "@/components/RevealOnScroll";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { userName, versionKey, loaded } = useUser();
+  const { userId, userName, versionKey, loaded } = useUser();
   const { xp, getOverallProgress, getWeekProgress } = useProgress();
   const { isWeekAdminUnlocked, adminLoaded, resourcesUnlocked } = useAdminUnlock();
   const [typedName, setTypedName] = useState("");
@@ -51,6 +53,23 @@ export default function DashboardPage() {
       return () => clearInterval(timer);
     }
   }, [userName, loaded, router]);
+
+  useEffect(() => {
+    if (!loaded || !userId || !userName) return;
+
+    syncLeaderboard({
+      userId,
+      userName,
+      versionKey,
+      totalXp: xp,
+      deltaXp: 0,
+      streak: getCurrentStreak(),
+      completedCount: overall.done,
+      currentWeek: overall.currentWeek,
+    }).catch(() => {
+      // Ignore sync issues on dashboard load.
+    });
+  }, [loaded, overall.currentWeek, overall.done, userId, userName, versionKey, xp]);
 
   // Animate progress bar
   useEffect(() => {
@@ -119,6 +138,21 @@ export default function DashboardPage() {
         >
           <RevealOnScroll>
             <Link
+              href="/leaderboard"
+              className="week-card"
+              style={{ "--card-accent": "var(--reward-500)" } as React.CSSProperties}
+            >
+              <div className="week-num" style={{ color: "var(--reward-500)" }}>
+                {"// Weekly league"}
+              </div>
+              <h3>Leaderboard</h3>
+              <p>
+                See your rank, promotion zone, and who you need to chase this week.
+              </p>
+            </Link>
+          </RevealOnScroll>
+          <RevealOnScroll delay={0.04}>
+            <Link
               href="/glossary"
               className="week-card"
               style={{ "--card-accent": "var(--purple)" } as React.CSSProperties}
@@ -132,7 +166,7 @@ export default function DashboardPage() {
               </p>
             </Link>
           </RevealOnScroll>
-          <RevealOnScroll delay={0.07}>
+          <RevealOnScroll delay={0.08}>
             {resourcesUnlocked ? (
               <Link
                 href="/resources"

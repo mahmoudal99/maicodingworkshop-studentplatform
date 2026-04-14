@@ -20,34 +20,6 @@ const MACHINE_LAB_SECTION_COPY = [
 
 type PathTheme = "default" | "machine-lab";
 
-function NodeConnector({ fromOffset, toOffset, done }: { fromOffset: number; toOffset: number; done: boolean }) {
-  const dx = toOffset - fromOffset;
-  // Vertical distance accounts for node height (~48px) + gap (8px for default, 14px for machine)
-  const dy = 28;
-  return (
-    <svg
-      className="lp-connector"
-      width={Math.abs(dx) + 4}
-      height={dy}
-      style={{
-        marginLeft: dx >= 0 ? `${-Math.abs(dx) / 2 - 2}px` : `${-Math.abs(dx) / 2 - 2}px`,
-        transform: `translateX(${(fromOffset + toOffset) / 2}px)`,
-        marginBottom: -4,
-      }}
-      viewBox={`0 0 ${Math.abs(dx) + 4} ${dy}`}
-    >
-      <line
-        x1={dx >= 0 ? 2 : Math.abs(dx) + 2}
-        y1={0}
-        x2={dx >= 0 ? Math.abs(dx) + 2 : 2}
-        y2={dy}
-        className={done ? "lp-connector-line-done" : "lp-connector-line"}
-        style={done ? { stroke: "var(--success-500)" } : undefined}
-      />
-    </svg>
-  );
-}
-
 function LevelNode({
   itemKey,
   globalIndex,
@@ -58,9 +30,6 @@ function LevelNode({
   label,
   pathTheme,
   isKeyConcept,
-  prevOffset,
-  showConnector,
-  prevDone,
 }: {
   itemKey: string;
   globalIndex: number;
@@ -71,9 +40,6 @@ function LevelNode({
   label: string;
   pathTheme: PathTheme;
   isKeyConcept: boolean;
-  prevOffset: number;
-  showConnector: boolean;
-  prevDone: boolean;
 }) {
   const router = useRouter();
   const { isCompleted } = useProgress();
@@ -103,11 +69,6 @@ function LevelNode({
       className="lp-node-wrapper"
       style={{ transform: `translateX(${offset}px)` }}
     >
-      {/* Connector line from previous node */}
-      {showConnector && (
-        <NodeConnector fromOffset={prevOffset} toOffset={offset} done={prevDone} />
-      )}
-
       {/* START badge for the first active (unlocked incomplete) node */}
       {isFirstActive && isActive && (
         <div className="lp-start-badge" style={{ background: sectionColor }}>
@@ -258,9 +219,6 @@ export default function LevelPath({
           const gi = globalIdx++;
           const itemKey = allItems[gi].key;
           const locked = gi > 0 && !isCompleted(allItems[gi - 1].key);
-          const prevGi = gi - 1;
-          const prevCurveOffset = prevGi >= 0 ? CURVE_OFFSETS[prevGi % CURVE_OFFSETS.length] : 0;
-          const prevItemDone = prevGi >= 0 && isCompleted(allItems[prevGi].key);
 
           return (
             <LevelNode
@@ -274,9 +232,6 @@ export default function LevelPath({
               label={section.items[iIdx]}
               pathTheme={pathTheme}
               isKeyConcept={sIdx >= 1}
-              prevOffset={prevCurveOffset}
-              showConnector={iIdx > 0}
-              prevDone={prevItemDone}
             />
           );
         });
