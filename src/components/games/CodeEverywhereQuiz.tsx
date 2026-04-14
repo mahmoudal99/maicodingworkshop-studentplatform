@@ -427,7 +427,6 @@ export default function CodeEverywhereQuiz({ onComplete, accent }: Props) {
       missionTitle="Code Detective"
       missionObjective={mission.objective}
       subtitle="Sweep the room, reveal what is inside, then stamp the evidence board."
-      hint="Scan first, then tag. Live signals mean code. Pure materials mean no code."
       companions={[
         {
           character: byteCharacter,
@@ -441,7 +440,6 @@ export default function CodeEverywhereQuiz({ onComplete, accent }: Props) {
         },
       ]}
       stability={{ stability, combo }}
-      statusText={statusText}
       controls={
         <div className="detective-panel">
           <div className="detective-card detective-mission-card">

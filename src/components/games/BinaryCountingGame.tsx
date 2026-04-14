@@ -171,7 +171,6 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
       missionTitle="Binary Door System"
       missionObjective="Flip the right bit switches to match the lock code and open the corridor."
       subtitle="Each switch adds value to the lock. Match the number to open it."
-      hint="Start with the biggest values. If you overshoot, turn off a larger bit."
       companions={[
         {
           character: byteCharacter,
@@ -185,7 +184,6 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
         },
       ]}
       stability={{ stability, combo }}
-      statusText={statusText}
       controls={
         <div className="binary-door-controls">
           <div className="binary-door-switch-deck">

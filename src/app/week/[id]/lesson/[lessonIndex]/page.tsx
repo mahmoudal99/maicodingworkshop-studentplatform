@@ -10,7 +10,6 @@ import BinaryCountingGame from "@/components/games/BinaryCountingGame";
 import ComponentMatchGame from "@/components/games/ComponentMatchGame";
 import CodeSortingGame from "@/components/games/CodeSortingGame";
 import CodeExecutionChainGame from "@/components/games/CodeExecutionChainGame";
-import CodeEverywhereQuiz from "@/components/games/CodeEverywhereQuiz";
 import ByteForgeGame from "@/components/games/ByteForgeGame";
 import SignalTunnelGame from "@/components/games/SignalTunnelGame";
 import MemoryVaultGame from "@/components/games/MemoryVaultGame";
@@ -106,7 +105,6 @@ export default function LessonPage() {
     "component-match": ComponentMatchGame,
     "code-sorting": CodeSortingGame,
     "code-execution-chain": CodeExecutionChainGame,
-    "code-everywhere-quiz": CodeEverywhereQuiz,
     "byte-forge": ByteForgeGame,
     "signal-tunnel": SignalTunnelGame,
     "memory-vault": MemoryVaultGame,

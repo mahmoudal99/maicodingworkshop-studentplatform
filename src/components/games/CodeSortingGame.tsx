@@ -465,7 +465,6 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
         missionTitle="Spaceship Command Game"
         missionObjective={mission.objective}
         subtitle="Build the flight plan, then watch the ship obey it step by step."
-        hint="Turns change direction. Forward moves one tile. Boost moves two."
         companions={[
           {
             character: byteCharacter,
@@ -479,7 +478,6 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
           },
         ]}
         stability={{ stability, combo }}
-        statusText={statusText}
         controls={
           <div className="spacegame-panel">
             <div className="spacegame-mission-card">

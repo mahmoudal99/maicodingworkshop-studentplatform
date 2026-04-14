@@ -2,7 +2,6 @@
 
 import { type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import Companion from "./Companion";
 import StabilityBar from "./StabilityBar";
 import type { CompanionMood } from "@/lib/game/use-companion";
 
@@ -19,11 +18,8 @@ interface GameSceneProps {
   missionTitle: string;
   missionObjective: string;
   subtitle?: string;
-  hint?: string;
   companions?: GameSceneCompanion[];
   stability?: { stability: number; combo: number };
-  statusText: string;
-  statusColor?: string;
   controls?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
@@ -36,11 +32,8 @@ export default function GameScene({
   missionTitle,
   missionObjective,
   subtitle,
-  hint,
   companions = [],
   stability,
-  statusText,
-  statusColor,
   controls,
   footer,
   children,
@@ -60,27 +53,14 @@ export default function GameScene({
           <StabilityBar stability={stability.stability} combo={stability.combo} accent={accent} />
         )}
 
-        <div className="mission-copy-row">
+        <div
+          className={`mission-copy-row${companions.length > 0 ? " mission-copy-row-clean" : ""}`}
+        >
           <div className="mission-copy-stack">
             <span className="mission-kicker">Repair Mission</span>
             <h2 className="lab-title">{missionTitle}</h2>
             <p className="lab-copy mission-objective">{missionObjective}</p>
           </div>
-
-          {companions.length > 0 && (
-            <div className="mission-companions" aria-label="Companions">
-              {companions.map((companion) => (
-                <Companion
-                  key={companion.character}
-                  character={companion.character}
-                  dialogue={companion.dialogue}
-                  mood={companion.mood}
-                  accent={accent}
-                  position="inline"
-                />
-              ))}
-            </div>
-          )}
         </div>
 
         {subtitle && <p className="mission-subtitle">{subtitle}</p>}
@@ -102,16 +82,11 @@ export default function GameScene({
           {controls && <aside className="mission-stage-controls">{controls}</aside>}
         </div>
 
-        <div className={`mission-status-group${footer ? " mission-status-group-complete" : ""}`}>
-          {footer && <div className="mission-complete-pill">Mission Complete</div>}
-          <div
-            className="lab-status"
-            style={{ color: statusColor || (footer ? accent : undefined) }}
-          >
-            {statusText}
+        {footer && (
+          <div className="mission-status-group mission-status-group-complete">
+            <div className="mission-complete-pill">Mission Complete</div>
           </div>
-          {hint && !footer && <div className="mission-hint">Hint: {hint}</div>}
-        </div>
+        )}
 
       </div>
 

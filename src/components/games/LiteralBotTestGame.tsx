@@ -506,7 +506,6 @@ export default function LiteralBotTestGame({ onComplete, accent }: Props) {
       missionTitle="Precision Bot"
       missionObjective={mission.objective}
       subtitle="Choose an instruction, then watch the bot follow it literally."
-      hint="Name the exact thing and the exact destination. Bots do not guess."
       companions={[
         {
           character: byteCharacter,
@@ -520,7 +519,6 @@ export default function LiteralBotTestGame({ onComplete, accent }: Props) {
         },
       ]}
       stability={{ stability, combo }}
-      statusText={statusText}
       controls={
         <div className="precision-panel">
           <div className="precision-card precision-mission-card">

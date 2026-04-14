@@ -1,55 +1,124 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 interface Props {
   onComplete: () => void;
   accent: string;
 }
 
-const CAPSULES = [
-  { icon: "A", label: "Letter capsule" },
-  { icon: "★", label: "Badge capsule" },
-  { icon: "⚙", label: "Tool capsule" },
+interface CapsuleChallenge {
+  id: string;
+  icon: string;
+  label: string;
+  objective: string;
+  modeLabel: string;
+  targetLabel: string;
+  statusHint: string;
+  successLine: string;
+  targetBits: boolean[];
+  initialBits: boolean[];
+  lockedBits: boolean[];
+}
+
+const BIT_WEIGHTS = [128, 64, 32, 16, 8, 4, 2, 1];
+
+const CHALLENGES: CapsuleChallenge[] = [
+  {
+    id: "shell-byte",
+    icon: "8",
+    label: "Byte shell",
+    objective: "Charge every slot to forge one full byte shell.",
+    modeLabel: "Charge all 8",
+    targetLabel: "Full byte shell",
+    statusHint: "First forge: every bit must be on. A byte is 8 live bits together.",
+    successLine: "Shell sealed. Next forge: match an exact byte pattern.",
+    targetBits: new Array(8).fill(true),
+    initialBits: new Array(8).fill(false),
+    lockedBits: new Array(8).fill(false),
+  },
+  {
+    id: "badge-byte",
+    icon: "A",
+    label: "Badge capsule",
+    objective: "Match the byte pattern that encodes the badge letter A.",
+    modeLabel: "Match pattern",
+    targetLabel: "Letter A",
+    statusHint: "Now precision matters. Match the byte exactly to seal the badge capsule.",
+    successLine: "Badge encoded. Final forge: repair a damaged byte with locked bits.",
+    targetBits: [false, true, false, false, false, false, false, true],
+    initialBits: new Array(8).fill(false),
+    lockedBits: new Array(8).fill(false),
+  },
+  {
+    id: "tool-repair",
+    icon: "⚙",
+    label: "Tool capsule",
+    objective: "Repair the damaged byte. Locked sockets stay fixed while you patch the loose ones.",
+    modeLabel: "Repair byte",
+    targetLabel: "Tool checksum",
+    statusHint: "The locked bits are stable. Fix only the loose sockets to restore the tool capsule.",
+    successLine: "Tool capsule repaired. One byte can hold a precise pattern, not just full power.",
+    targetBits: [true, false, true, true, false, true, false, false],
+    initialBits: [true, true, false, true, true, false, false, false],
+    lockedBits: [true, false, false, true, false, false, true, true],
+  },
 ];
 
-function freshCells() {
-  return new Array(8).fill(false);
+function cloneBits(bits: boolean[]) {
+  return [...bits];
+}
+
+function formatPattern(bits: boolean[]) {
+  return bits.map((bit) => (bit ? "1" : "0")).join("");
+}
+
+function isChallengeSolved(challenge: CapsuleChallenge, cells: boolean[]) {
+  return cells.every((cell, index) => cell === challenge.targetBits[index]);
 }
 
 export default function ByteForgeGame({ onComplete, accent }: Props) {
-  const [cells, setCells] = useState<boolean[]>(() => freshCells());
   const [round, setRound] = useState(0);
-  const [phase, setPhase] = useState<"charging" | "sealed" | "done">(
-    "charging"
-  );
+  const [cells, setCells] = useState<boolean[]>(() => cloneBits(CHALLENGES[0].initialBits));
+  const [phase, setPhase] = useState<"charging" | "sealed" | "done">("charging");
 
+  const challenge = CHALLENGES[round];
   const activeCount = cells.filter(Boolean).length;
-  const capsule = CAPSULES[round];
+  const matchedCount = cells.reduce(
+    (count, cell, index) => count + Number(cell === challenge.targetBits[index]),
+    0,
+  );
+  const currentPattern = useMemo(() => formatPattern(cells), [cells]);
+  const targetPattern = useMemo(() => formatPattern(challenge.targetBits), [challenge.targetBits]);
+
+  const advanceRound = useCallback(() => {
+    if (round === CHALLENGES.length - 1) {
+      setPhase("done");
+      return;
+    }
+
+    const nextRound = round + 1;
+    setRound(nextRound);
+    setCells(cloneBits(CHALLENGES[nextRound].initialBits));
+    setPhase("charging");
+  }, [round]);
 
   const toggleCell = useCallback(
     (index: number) => {
-      if (phase !== "charging") return;
+      if (phase !== "charging" || challenge.lockedBits[index]) return;
+
       const next = [...cells];
       next[index] = !next[index];
-      const nextCount = next.filter(Boolean).length;
-
       setCells(next);
 
-      if (nextCount === 8) {
+      if (isChallengeSolved(challenge, next)) {
         setPhase("sealed");
-        setTimeout(() => {
-          if (round === CAPSULES.length - 1) {
-            setPhase("done");
-            return;
-          }
-          setRound((prev) => prev + 1);
-          setCells(freshCells());
-          setPhase("charging");
-        }, 900);
+        window.setTimeout(() => {
+          advanceRound();
+        }, 1100);
       }
     },
-    [cells, phase, round]
+    [advanceRound, cells, challenge, phase],
   );
 
   if (phase === "done") {
@@ -60,9 +129,9 @@ export default function ByteForgeGame({ onComplete, accent }: Props) {
             1 BYTE
           </div>
           <h3>Byte forged</h3>
-          <p>Those eight glowing bit slots just sealed into one byte capsule.</p>
+          <p>You charged a full shell, matched a letter byte, and repaired a damaged byte.</p>
           <div className="lab-takeaway">
-            Takeaway: A byte is 8 bits working together.
+            Takeaway: A byte is 8 bits, and the exact 0/1 pattern is what gives it meaning.
           </div>
           <button
             className="game-btn"
@@ -86,40 +155,90 @@ export default function ByteForgeGame({ onComplete, accent }: Props) {
         <div className="lab-panel-header">
           <span className="lab-room">System Room</span>
           <span className="lab-step">
-            Capsule {round + 1} of {CAPSULES.length}
+            Capsule {round + 1} of {CHALLENGES.length}
           </span>
         </div>
         <h2 className="lab-title">Byte Forge</h2>
-        <p className="lab-copy">
-          Fill every bit slot to seal one byte capsule for the machine.
-        </p>
+        <p className="lab-copy">{challenge.objective}</p>
 
         <div className="lab-workspace">
           <div className={`bfg-core${phase === "sealed" ? " bfg-core-sealed" : ""}`}>
-            <div className="bfg-core-label">Forge Core</div>
-            <div className="bfg-core-icon">{capsule.icon}</div>
-            <div className="bfg-core-count">{activeCount}/8 bits charged</div>
+            <div className="bfg-core-topline">
+              <span className="bfg-core-label">Forge Core</span>
+              <span className="bfg-core-mode">{challenge.modeLabel}</span>
+            </div>
+            <div className="bfg-core-icon">{challenge.icon}</div>
+            <div className="bfg-core-count">
+              {challenge.id === "shell-byte" ? `${activeCount}/8 sockets charged` : `${matchedCount}/8 bits aligned`}
+            </div>
+          </div>
+
+          <div className="bfg-byte-readout">
+            <div className="bfg-byte-card">
+              <span className="bfg-byte-label">Target byte</span>
+              <div className="bfg-byte-strip" aria-label={`Target pattern ${targetPattern}`}>
+                {challenge.targetBits.map((bit, index) => (
+                  <span key={`target-${challenge.id}-${index}`} className={`bfg-byte-bit${bit ? " bfg-byte-bit-on" : ""}`}>
+                    {bit ? 1 : 0}
+                  </span>
+                ))}
+              </div>
+              <strong>{targetPattern}</strong>
+              <small>{challenge.targetLabel}</small>
+            </div>
+
+            <div className="bfg-byte-card">
+              <span className="bfg-byte-label">Current byte</span>
+              <div className="bfg-byte-strip" aria-label={`Current pattern ${currentPattern}`}>
+                {cells.map((bit, index) => (
+                  <span
+                    key={`current-${challenge.id}-${index}`}
+                    className={`bfg-byte-bit${bit ? " bfg-byte-bit-on" : ""}${
+                      bit === challenge.targetBits[index] ? " bfg-byte-bit-match" : " bfg-byte-bit-miss"
+                    }`}
+                  >
+                    {bit ? 1 : 0}
+                  </span>
+                ))}
+              </div>
+              <strong>{currentPattern}</strong>
+              <small>{matchedCount}/8 aligned</small>
+            </div>
           </div>
 
           <div className="bfg-grid">
-            {cells.map((active, index) => (
-              <button
-                key={index}
-                className={`bfg-cell${active ? " bfg-cell-on" : ""}`}
-                onClick={() => toggleCell(index)}
-                type="button"
-                aria-label={active ? `Disable bit ${index + 1}` : `Enable bit ${index + 1}`}
-              >
-                {active ? 1 : 0}
-              </button>
-            ))}
+            {cells.map((active, index) => {
+              const locked = challenge.lockedBits[index];
+              const matchesTarget = active === challenge.targetBits[index];
+
+              return (
+                <button
+                  key={`${challenge.id}-${index}`}
+                  className={`bfg-cell${active ? " bfg-cell-on" : ""}${locked ? " bfg-cell-locked" : ""}${
+                    matchesTarget ? " bfg-cell-match" : " bfg-cell-miss"
+                  }`}
+                  onClick={() => toggleCell(index)}
+                  type="button"
+                  disabled={phase !== "charging" || locked}
+                  aria-label={
+                    locked
+                      ? `Bit ${index + 1} locked at ${active ? 1 : 0}`
+                      : active
+                      ? `Disable bit ${index + 1}`
+                      : `Enable bit ${index + 1}`
+                  }
+                >
+                  <span className="bfg-cell-weight">{BIT_WEIGHTS[index]}</span>
+                  <span className="bfg-cell-value">{active ? 1 : 0}</span>
+                  <span className="bfg-cell-tag">{locked ? "LOCK" : matchesTarget ? "SYNC" : "TUNE"}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div className="lab-status" style={{ color: phase === "sealed" ? accent : undefined }}>
-          {phase === "sealed"
-            ? `${capsule.label} sealed. Eight bits became one byte.`
-            : "Charge all 8 slots to compress them into one byte."}
+          {phase === "sealed" ? challenge.successLine : challenge.statusHint}
         </div>
       </div>
     </div>

@@ -3,7 +3,6 @@ export type GameId =
   | "component-match"
   | "code-sorting"
   | "code-execution-chain"
-  | "code-everywhere-quiz"
   | "byte-forge"
   | "signal-tunnel"
   | "memory-vault"
@@ -15,7 +14,7 @@ const GAME_MAP: Record<string, GameId> = {
   "A-0-0-1": "component-match",
   "A-0-0-2": "code-sorting",
   "A-0-0-3": "code-execution-chain",
-  "A-0-0-4": "code-everywhere-quiz",
+  "A-0-0-4": "code-execution-chain",
   "A-0-1-0": "byte-forge",
   "A-0-1-1": "signal-tunnel",
   "A-0-1-2": "memory-vault",

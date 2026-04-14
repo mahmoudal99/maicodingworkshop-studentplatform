@@ -214,7 +214,6 @@ export default function MemoryVaultGame({ onComplete, accent }: Props) {
       missionTitle="Memory Sorting Vault"
       missionObjective="Sort live files into active memory or storage, then cut power to see what survives."
       subtitle="Power-off is the lesson: RAM clears while storage stays."
-      hint="Need it now means RAM. Need it later means storage."
       companions={[
         {
           character: byteCharacter,
@@ -228,7 +227,6 @@ export default function MemoryVaultGame({ onComplete, accent }: Props) {
         },
       ]}
       stability={{ stability, combo }}
-      statusText={statusText}
       controls={
         <div className="memory-queue-panel">
           <div className="memory-queue-header">

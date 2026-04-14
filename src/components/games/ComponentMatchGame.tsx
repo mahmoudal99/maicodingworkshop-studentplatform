@@ -245,7 +245,6 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
       missionTitle="Computer Builder"
       missionObjective="Place the right hardware on the board, then run a power test."
       subtitle="Each part wakes a different system inside the machine."
-      hint="CPU processes. RAM holds active work. Storage saves. Input sends in. Output shows out."
       companions={[
         {
           character: byteCharacter,
@@ -259,7 +258,6 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
         },
       ]}
       stability={{ stability, combo }}
-      statusText={statusText}
       controls={
         <div className="computer-builder-panel">
           <div className="computer-builder-panel-header">

@@ -104,7 +104,7 @@ export const WEEKS_A: WeekData[] = [
           "Parts Bay Repair",
           "Command Builder",
           "Code Conveyor",
-          "Code Scanner"
+          "Command Relay"
         ]
       },
       {

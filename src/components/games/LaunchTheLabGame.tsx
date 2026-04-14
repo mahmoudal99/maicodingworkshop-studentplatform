@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import FbxAssetStage from "@/components/game/FbxAssetStage";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import GameScene from "@/components/game/GameScene";
-import { useCompanion } from "@/lib/game/use-companion";
 import { useGameMeta } from "@/lib/game/use-game-meta";
 import { useParticles } from "@/lib/game/use-particles";
 import { useSound } from "@/lib/game/use-sound";
@@ -14,153 +12,140 @@ interface Props {
   accent: string;
 }
 
-type StageId = "power" | "byte" | "memory" | "signal" | "output";
-type MemoryTarget = "ram" | "storage";
-type OutputTarget = "screen" | "speaker";
-type SignalNodeId = "input" | "process" | "output";
-
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface BossStage {
-  id: StageId;
-  title: string;
-  objective: string;
-  introLine: string;
+interface QuizQuestion {
+  id: string;
+  concept: string;
+  prompt: string;
+  options: string[];
+  correctIndex: number;
   successLine: string;
-  byteLine: string;
-  echoLine: string;
-  burstPoint: Point;
+  clue: string;
 }
 
-const BIT_POWERS = [8, 4, 2, 1];
-const SIGNAL_ORDER: SignalNodeId[] = ["input", "process", "output"];
-const FLEET_FLAGSHIP = {
-  name: "Praetor",
-  asset: "/Assets/Praetor.fbx",
-  role: "Command carrier holding orbit above The Core during the reboot.",
-};
-
-const STAGES: BossStage[] = [
+const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
-    id: "power",
-    title: "Prime the Power Rails",
-    objective: "Set the rail switches so the boot core receives exactly 5 units of startup power.",
-    introLine: "Start the reboot by dialing the power rails to exactly 5.",
-    successLine: "Power rails aligned. The central conduit is now live.",
-    byteLine: "Nice. The city just felt that surge.",
-    echoLine: "Binary switches can represent exact values when you combine them carefully.",
-    burstPoint: { x: 22, y: 26 },
+    id: "byte-size",
+    concept: "Byte",
+    prompt: "How many bits make one byte?",
+    options: ["2 bits", "4 bits", "8 bits", "16 bits"],
+    correctIndex: 2,
+    successLine: "Right. One byte is 8 bits working together.",
+    clue: "A byte is a full pack of 8 bit slots.",
   },
   {
-    id: "byte",
-    title: "Forge the Boot Byte",
-    objective: "Charge all 8 byte cells so the startup packet can seal and move into The Core.",
-    introLine: "Now seal one full byte. The reboot packet needs all 8 cells charged.",
-    successLine: "Boot byte sealed. The startup packet is ready to travel.",
-    byteLine: "Eight bright bits. That packet is ready to fly.",
-    echoLine: "A byte is one group of 8 bits working together.",
-    burstPoint: { x: 78, y: 26 },
+    id: "cpu-role",
+    concept: "CPU",
+    prompt: "Which part of the computer runs instructions?",
+    options: ["CPU", "Storage vault", "Speaker", "Keyboard"],
+    correctIndex: 0,
+    successLine: "Yes. The CPU is the part that processes instructions.",
+    clue: "Think: the brain that follows the code.",
   },
   {
-    id: "memory",
-    title: "Route Active Data",
-    objective: "Send the live boot patch into RAM so the machine can use it right now.",
-    introLine: "Choose the dock for live boot data. The patch has to stay active during startup.",
-    successLine: "Live patch docked in RAM. Fast working memory is online.",
-    byteLine: "RAM grabbed it fast. Good call.",
-    echoLine: "RAM holds data the computer is using right now.",
-    burstPoint: { x: 22, y: 74 },
+    id: "ram-role",
+    concept: "RAM",
+    prompt: "Where should live data go while the machine is running?",
+    options: ["Storage", "RAM", "Screen", "Mouse"],
+    correctIndex: 1,
+    successLine: "Correct. RAM is for what the computer is using right now.",
+    clue: "This memory is fast and temporary.",
   },
   {
-    id: "signal",
-    title: "Route the Startup Signal",
-    objective: "Send the pulse through Input, then Process, then Output to wake the final line.",
-    introLine: "Build the reboot flow in the right order: input, process, then output.",
-    successLine: "Startup signal routed. The CPU is handing the result to the output bus.",
-    byteLine: "Clean route. The core understood every step.",
-    echoLine: "Computers take input, process it, and then create output.",
-    burstPoint: { x: 78, y: 74 },
+    id: "storage-role",
+    concept: "Storage",
+    prompt: "What keeps files after the power turns off?",
+    options: ["RAM", "CPU", "Storage", "Output"],
+    correctIndex: 2,
+    successLine: "Exactly. Storage keeps data for later.",
+    clue: "It stays even when the machine shuts down.",
   },
   {
-    id: "output",
-    title: "Launch the City Output",
-    objective: "Send the restored system state to the screen wall so The Core can visibly reboot.",
-    introLine: "Final step. Pick the output that shows the city coming back online.",
-    successLine: "Screen wall active. The Core is rebooting right in front of you.",
-    byteLine: "There it is. The whole city can see the reboot happen.",
-    echoLine: "Output is the result the user can see, hear, or otherwise notice.",
-    burstPoint: { x: 50, y: 86 },
+    id: "binary-language",
+    concept: "Binary",
+    prompt: "Which number system uses only 0 and 1?",
+    options: ["Decimal", "Binary", "Alphabetic", "Pixel"],
+    correctIndex: 1,
+    successLine: "Right. Binary is built from only 0 and 1.",
+    clue: "Computers love simple on and off signals.",
+  },
+  {
+    id: "ipo-order",
+    concept: "Input -> Process -> Output",
+    prompt: "What is the correct computer flow?",
+    options: [
+      "Process -> Output -> Input",
+      "Input -> Process -> Output",
+      "Output -> Input -> Process",
+      "Input -> Output -> Process",
+    ],
+    correctIndex: 1,
+    successLine: "Perfect. Input comes first, then processing, then output.",
+    clue: "The computer gets something, works on it, then shows a result.",
+  },
+  {
+    id: "precision",
+    concept: "Precision",
+    prompt: "Why do programs need precise instructions?",
+    options: [
+      "Computers guess the missing parts",
+      "Computers follow instructions exactly",
+      "Computers only read pictures",
+      "Computers ignore small details",
+    ],
+    correctIndex: 1,
+    successLine: "Yes. Computers do exactly what the code says.",
+    clue: "Literal machines are not great at guessing.",
+  },
+  {
+    id: "output-example",
+    concept: "Output",
+    prompt: "Which choice is an output?",
+    options: ["Typing on a keyboard", "Clicking a mouse", "A message showing on screen", "Saving to RAM"],
+    correctIndex: 2,
+    successLine: "Correct. Output is the result the user can notice.",
+    clue: "Think about what the computer shows back to you.",
+  },
+  {
+    id: "code-run",
+    concept: "Code Execution",
+    prompt: 'What does `print("HELLO")` do?',
+    options: [
+      "Stores HELLO forever",
+      "Deletes the text",
+      "Shows HELLO as output",
+      "Turns HELLO into RAM",
+    ],
+    correctIndex: 2,
+    successLine: "Exactly. It sends HELLO to the output channel.",
+    clue: "The command is about showing something, not storing it.",
   },
 ];
 
-function includesId(ids: StageId[], id: StageId) {
-  return ids.includes(id);
-}
-
-function calculateBitValue(bits: boolean[]) {
-  return bits.reduce((sum, active, index) => sum + (active ? BIT_POWERS[index] : 0), 0);
-}
-
-function stageIndexFor(id: StageId) {
-  return STAGES.findIndex((stage) => stage.id === id);
-}
-
 export default function LaunchTheLabGame({ onComplete, accent }: Props) {
   const { userName } = useUser();
-  const {
-    character: byteCharacter,
-    dialogue: byteDialogue,
-    mood: byteMood,
-    say: byteSay,
-    celebrate: byteCelebrate,
-    alert: byteAlert,
-  } = useCompanion("byte");
-  const {
-    character: echoCharacter,
-    dialogue: echoDialogue,
-    mood: echoMood,
-    say: echoSay,
-  } = useCompanion("echo");
-  const { playTap, playCorrect, playWrong, playCombo, playComplete, playPulse } = useSound();
+  const { playTap, playCorrect, playWrong, playCombo, playComplete } = useSound();
   const { containerRef, burst } = useParticles();
-  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(STAGES.length);
+  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(QUIZ_QUESTIONS.length);
   const comboRef = useRef(combo);
   const timersRef = useRef<number[]>([]);
 
-  const [stageIndex, setStageIndex] = useState(0);
+  const [questionIndex, setQuestionIndex] = useState(0);
   const [phase, setPhase] = useState<"playing" | "transition" | "complete">("playing");
-  const [statusText, setStatusText] = useState(STAGES[0].introLine);
-  const [completedStages, setCompletedStages] = useState<StageId[]>([]);
-  const [wrongModule, setWrongModule] = useState<StageId | null>(null);
-  const [bits, setBits] = useState<boolean[]>([false, false, false, false]);
-  const [byteCells, setByteCells] = useState<boolean[]>(new Array(8).fill(false));
-  const [memoryTarget, setMemoryTarget] = useState<MemoryTarget | null>(null);
-  const [signalPath, setSignalPath] = useState<SignalNodeId[]>([]);
-  const [outputTarget, setOutputTarget] = useState<OutputTarget | null>(null);
-  const [cityOnline, setCityOnline] = useState(false);
+  const [statusText, setStatusText] = useState("Answer each recap card to reboot the lab from memory.");
+  const [score, setScore] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [disabledOptions, setDisabledOptions] = useState<number[]>([]);
+  const [lastResult, setLastResult] = useState<"correct" | "wrong" | null>(null);
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
 
-  const stage = STAGES[stageIndex];
-  const bitValue = calculateBitValue(bits);
-  const byteCharge = byteCells.filter(Boolean).length;
-  const repairedCount =
-    phase === "complete"
-      ? STAGES.length
-      : completedStages.length +
-        (phase === "transition" && !includesId(completedStages, stage.id) ? 1 : 0);
-  const currentSignalExpected = SIGNAL_ORDER[signalPath.length];
+  const question = QUIZ_QUESTIONS[questionIndex];
+  const progressPercent = ((questionIndex + (phase === "complete" ? 1 : 0)) / QUIZ_QUESTIONS.length) * 100;
+  const playerName = userName || "Engineer";
+  const mastery = useMemo(() => Math.round((score / QUIZ_QUESTIONS.length) * 100), [score]);
 
   useEffect(() => {
     comboRef.current = combo;
   }, [combo]);
-
-  useEffect(() => {
-    const player = userName || "Engineer";
-    byteSay(`${player}, this is it. Wake the whole city one subsystem at a time.`, 3200);
-    echoSay("Every repair you learned this week now connects into one system.", 2600);
-  }, [byteSay, echoSay, userName]);
 
   useEffect(() => {
     return () => {
@@ -174,216 +159,67 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
     timersRef.current = [];
   }
 
-  function burstAt(point: Point, color?: string) {
+  function celebrateQuestion() {
     const container = containerRef.current;
     if (!container) return;
 
     burst({
-      x: container.clientWidth * (point.x / 100),
-      y: container.clientHeight * (point.y / 100),
-      color: color || accent,
+      x: container.clientWidth * 0.5,
+      y: container.clientHeight * 0.28,
+      color: accent,
       count: 22,
-      spread: 110,
+      spread: 130,
       size: 8,
     });
   }
 
-  function moveToNextStage() {
-    if (stageIndex === STAGES.length - 1) {
+  function moveToNextQuestion() {
+    clearTimers();
+
+    if (questionIndex === QUIZ_QUESTIONS.length - 1) {
       setPhase("complete");
-      setCityOnline(true);
-      setStatusText("The Core is fully rebooted. Rails, memory, CPU flow, and output are all alive again.");
+      setStatusText(`Recap complete. ${playerName} rebooted the lab from memory.`);
       return;
     }
 
-    const nextStageIndex = stageIndex + 1;
-    const nextStage = STAGES[nextStageIndex];
-    setStageIndex(nextStageIndex);
+    const nextIndex = questionIndex + 1;
+    setQuestionIndex(nextIndex);
+    setSelectedIndex(null);
+    setDisabledOptions([]);
+    setLastResult(null);
     setPhase("playing");
-    setWrongModule(null);
-    setStatusText(nextStage.introLine);
+    setStatusText(QUIZ_QUESTIONS[nextIndex].clue);
   }
 
-  function completeCurrentStage(color?: string) {
-    if (includesId(completedStages, stage.id)) return;
+  function handleOptionSelect(optionIndex: number) {
+    if (phase !== "playing" || disabledOptions.includes(optionIndex)) return;
 
-    setCompletedStages((current) => [...current, stage.id]);
-    setWrongModule(null);
-    setStatusText(stage.successLine);
-    recordCorrect();
-    playCorrect();
-    if (comboRef.current + 1 > 1) playCombo(comboRef.current + 1);
-    playComplete();
-    byteCelebrate(stage.byteLine);
-    echoSay(stage.echoLine, 2600);
-    burstAt(stage.burstPoint, color);
+    playTap();
+    setSelectedIndex(optionIndex);
 
-    if (stageIndex === STAGES.length - 1) {
-      timersRef.current.push(
-        window.setTimeout(() => {
-          setCityOnline(true);
-          setPhase("complete");
-          setStatusText("The Core is fully rebooted. Rails, memory, CPU flow, and output are all alive again.");
-        }, 900)
-      );
+    if (optionIndex === question.correctIndex) {
+      setLastResult("correct");
+      setPhase("transition");
+      setScore((current) => current + 1);
+      setCompletedIds((current) => [...current, question.id]);
+      setStatusText(question.successLine);
+      recordCorrect();
+      playCorrect();
+      if (comboRef.current + 1 > 1) playCombo(comboRef.current + 1);
+      if (questionIndex === QUIZ_QUESTIONS.length - 1) {
+        playComplete();
+      }
+      celebrateQuestion();
+
+      timersRef.current.push(window.setTimeout(moveToNextQuestion, 1050));
       return;
     }
 
-    setPhase("transition");
-    timersRef.current.push(window.setTimeout(moveToNextStage, 1250));
-  }
-
-  function flagWrong(moduleId: StageId, message: string, byteLine: string, echoLine: string) {
-    setWrongModule(moduleId);
-    setStatusText(message);
+    setLastResult("wrong");
+    setDisabledOptions((current) => [...current, optionIndex]);
+    setStatusText(question.clue);
     recordWrong();
     playWrong();
-    byteAlert(byteLine);
-    echoSay(echoLine, 2300);
-    timersRef.current.push(
-      window.setTimeout(() => {
-        setWrongModule(null);
-      }, 720)
-    );
-  }
-
-  function handleBitToggle(index: number) {
-    if (phase !== "playing" || stage.id !== "power") return;
-
-    clearTimers();
-    const nextBits = [...bits];
-    nextBits[index] = !nextBits[index];
-    const nextValue = calculateBitValue(nextBits);
-
-    setBits(nextBits);
-    setStatusText(`Power rails now reading ${nextValue}. Target is 5.`);
-    playTap();
-
-    if (nextValue === 5) {
-      setPhase("transition");
-      timersRef.current.push(
-        window.setTimeout(() => {
-          completeCurrentStage("#38bdf8");
-        }, 520)
-      );
-    }
-  }
-
-  function handleByteCellToggle(index: number) {
-    if (phase !== "playing" || stage.id !== "byte") return;
-
-    clearTimers();
-    const nextCells = [...byteCells];
-    nextCells[index] = !nextCells[index];
-    const nextCount = nextCells.filter(Boolean).length;
-
-    setByteCells(nextCells);
-    setStatusText(`Boot byte charging: ${nextCount} of 8 cells active.`);
-    playTap();
-
-    if (nextCount === 8) {
-      setPhase("transition");
-      timersRef.current.push(
-        window.setTimeout(() => {
-          completeCurrentStage("#22c55e");
-        }, 520)
-      );
-    }
-  }
-
-  function handleMemoryChoice(target: MemoryTarget) {
-    if (phase !== "playing" || stage.id !== "memory") return;
-
-    clearTimers();
-    setMemoryTarget(target);
-    playTap();
-
-    if (target === "ram") {
-      setPhase("transition");
-      setStatusText("Routing live boot data into RAM now...");
-      timersRef.current.push(
-        window.setTimeout(() => {
-          completeCurrentStage("#a78bfa");
-        }, 560)
-      );
-      return;
-    }
-
-    flagWrong(
-      "memory",
-      "Storage keeps data for later. The live boot patch has to stay in RAM right now.",
-      "Storage is for later. We need fast active memory.",
-      "RAM is the place for data the system is using right now."
-    );
-
-    timersRef.current.push(
-      window.setTimeout(() => {
-        setMemoryTarget(null);
-      }, 980)
-    );
-  }
-
-  function handleSignalNode(nodeId: SignalNodeId) {
-    if (phase !== "playing" || stage.id !== "signal") return;
-
-    clearTimers();
-    if (nodeId !== currentSignalExpected) {
-      setSignalPath([]);
-      playTap();
-      flagWrong(
-        "signal",
-        "Signal order broke. Rebuild it as Input, then Process, then Output.",
-        "The pulse scrambled. Try the flow in the real system order.",
-        "Input comes first, processing happens in the middle, and output comes last."
-      );
-      return;
-    }
-
-    const nextPath = [...signalPath, nodeId];
-    setSignalPath(nextPath);
-    setStatusText(`Signal locked into ${nodeId.toUpperCase()}. Keep routing the reboot pulse.`);
-    playPulse();
-
-    if (nextPath.length === SIGNAL_ORDER.length) {
-      setPhase("transition");
-      timersRef.current.push(
-        window.setTimeout(() => {
-          completeCurrentStage("#2dd4bf");
-        }, 520)
-      );
-    }
-  }
-
-  function handleOutputChoice(target: OutputTarget) {
-    if (phase !== "playing" || stage.id !== "output") return;
-
-    clearTimers();
-    setOutputTarget(target);
-    playTap();
-
-    if (target === "screen") {
-      setPhase("transition");
-      setStatusText("Sending the reboot result to the city screen wall...");
-      timersRef.current.push(
-        window.setTimeout(() => {
-          completeCurrentStage("#f59e0b");
-        }, 560)
-      );
-      return;
-    }
-
-    flagWrong(
-      "output",
-      "Speaker output can make sound, but the reboot needs a visible citywide display.",
-      "Sound is output too, just not the one this mission needs.",
-      "Output means the result the user notices. Here, the city needs a screen."
-    );
-
-    timersRef.current.push(
-      window.setTimeout(() => {
-        setOutputTarget(null);
-      }, 980)
-    );
   }
 
   const footer =
@@ -393,100 +229,50 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
       </button>
     ) : null;
 
-  const bootFeed =
-    stage.id === "power"
-      ? `Rail total ${bitValue} / 5`
-      : stage.id === "byte"
-      ? `${byteCharge} / 8 byte cells charged`
-      : stage.id === "memory"
-      ? memoryTarget
-        ? `Patch routed to ${memoryTarget.toUpperCase()}`
-        : "Awaiting memory dock"
-      : stage.id === "signal"
-      ? signalPath.length > 0
-        ? `Pulse path: ${signalPath.join(" -> ")}`
-        : "Awaiting signal route"
-      : outputTarget
-      ? `Output target: ${outputTarget.toUpperCase()}`
-      : "Awaiting output target";
-
   return (
     <GameScene
       layout="birdseye"
       accent={accent}
-      header={{ room: "The Core", step: `Boss ${Math.min(stageIndex + 1, STAGES.length)} of ${STAGES.length}` }}
-      missionTitle="Boot the System"
-      missionObjective={stage.objective}
-      subtitle="Reboot the whole machine-city by restoring power, memory, signal flow, and output."
-      hint="Each subsystem unlocks the next one. Watch the city wake up after every fix."
-      companions={[
-        {
-          character: byteCharacter,
-          dialogue: byteDialogue,
-          mood: byteMood,
-        },
-        {
-          character: echoCharacter,
-          dialogue: echoDialogue,
-          mood: echoMood,
-        },
-      ]}
+      header={{ room: "The Core", step: `Recap ${Math.min(questionIndex + 1, QUIZ_QUESTIONS.length)} of ${QUIZ_QUESTIONS.length}` }}
+      missionTitle="Launch the Lab"
+      missionObjective="Answer the Week 1 recap cards and prove you remember how the machine works."
+      subtitle="A fast Duolingo-style check on bits, bytes, CPU, RAM, storage, binary, flow, and precision."
       stability={{ stability, combo }}
-      statusText={statusText}
-        controls={
-          <div className="boot-panel">
-          <div className="boot-card boot-mission-card">
-            <span className="boot-kicker">Boss Objective</span>
-            <strong>{stage.title}</strong>
-            <div className="boot-fleet-status">
-              <span className="boot-fleet-status-label">Command Carrier</span>
-              <strong>{FLEET_FLAGSHIP.name}</strong>
-              <small>{FLEET_FLAGSHIP.role}</small>
-            </div>
-            <p>{stage.objective}</p>
-            <div className="boot-progress-row">
-              <div className="boot-progress-bar" aria-hidden="true">
-                <span
-                  style={{
-                    width: `${(repairedCount / STAGES.length) * 100}%`,
-                    background: accent,
-                  }}
-                />
+      controls={
+        <div className="recap-panel">
+          <div className="recap-card">
+            <span className="recap-kicker">Mission Score</span>
+            <strong>{score} / {QUIZ_QUESTIONS.length}</strong>
+            <p>{phase === "complete" ? "Week 1 recap fully cleared." : "Each correct card reboots another concept in the lab."}</p>
+            <div className="recap-progress-row">
+              <div className="recap-progress-bar" aria-hidden="true">
+                <span style={{ width: `${progressPercent}%`, background: accent }} />
               </div>
-              <span>{repairedCount}/{STAGES.length} systems restored</span>
+              <span>{questionIndex + (phase === "complete" ? 1 : 0)} / {QUIZ_QUESTIONS.length} cards cleared</span>
             </div>
           </div>
 
-          <div className="boot-card boot-status-card">
-            <div className="boot-status-header">
-              <span className="boot-kicker">System Map</span>
-              <span>{bootFeed}</span>
+          <div className="recap-card">
+            <div className="recap-status-header">
+              <span className="recap-kicker">Concept Grid</span>
+              <span>{mastery}% mastery</span>
             </div>
-            <div className="boot-stage-list">
-              {STAGES.map((bossStage, index) => {
-                const complete = includesId(completedStages, bossStage.id);
-                const active = stage.id === bossStage.id && phase !== "complete";
-                const locked = !complete && index > stageIndex;
+            <div className="recap-topic-list">
+              {QUIZ_QUESTIONS.map((item, index) => {
+                const complete = completedIds.includes(item.id);
+                const active = phase !== "complete" && index === questionIndex;
 
                 return (
                   <div
-                    key={bossStage.id}
-                    className={`boot-stage-item${complete ? " boot-stage-item-complete" : ""}${
-                      active ? " boot-stage-item-active" : ""
-                    }${locked ? " boot-stage-item-locked" : ""}`}
+                    key={item.id}
+                    className={`recap-topic-item${complete ? " recap-topic-item-complete" : ""}${
+                      active ? " recap-topic-item-active" : ""
+                    }`}
                   >
-                    <span className="boot-stage-index">{index + 1}</span>
-                    <span className="boot-stage-copy">
-                      <strong>{bossStage.title}</strong>
-                      <small>
-                        {complete
-                          ? "Online"
-                          : active
-                          ? "Current objective"
-                          : locked
-                          ? "Locked"
-                          : "Queued"}
-                      </small>
+                    <span className="recap-topic-index">{index + 1}</span>
+                    <span className="recap-topic-copy">
+                      <strong>{item.concept}</strong>
+                      <small>{complete ? "Locked in" : active ? "Current card" : "Queued"}</small>
                     </span>
                   </div>
                 );
@@ -494,283 +280,91 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
             </div>
           </div>
 
-          <div className="boot-card boot-readout-card">
-            <span className="boot-kicker">Live Readout</span>
-            {stage.id === "power" && (
-              <div className="boot-readout-block">
-                <strong>{bits.map((bit) => (bit ? 1 : 0)).join("")}</strong>
-                <small>Use the rails to make exactly 5 units of startup power.</small>
-              </div>
-            )}
-
-            {stage.id === "byte" && (
-              <div className="boot-readout-block">
-                <strong>{byteCharge} of 8 cells active</strong>
-                <small>One full byte is needed to seal the boot packet.</small>
-              </div>
-            )}
-
-            {stage.id === "memory" && (
-              <div className="boot-readout-block">
-                <strong>{memoryTarget ? memoryTarget.toUpperCase() : "Select a dock"}</strong>
-                <small>Live data belongs in RAM while the system is running.</small>
-              </div>
-            )}
-
-            {stage.id === "signal" && (
-              <div className="boot-readout-block">
-                <strong>{signalPath.length > 0 ? signalPath.join(" -> ") : "No path routed"}</strong>
-                <small>Click Input, then Process, then Output.</small>
-              </div>
-            )}
-
-            {stage.id === "output" && (
-              <div className="boot-readout-block">
-                <strong>{outputTarget ? outputTarget.toUpperCase() : "Choose the final output"}</strong>
-                <small>The reboot must appear where the city can see it.</small>
-              </div>
-            )}
+          <div className="recap-card">
+            <span className="recap-kicker">Live Readout</span>
+            <strong>{lastResult === "correct" ? "Correct" : lastResult === "wrong" ? "Try again" : "Pick an answer"}</strong>
+            <p>{statusText}</p>
           </div>
         </div>
       }
       footer={footer}
+    >
+      <div
+        ref={containerRef}
+        className={`recap-lab${lastResult === "correct" ? " recap-lab-correct" : ""}${
+          lastResult === "wrong" ? " recap-lab-wrong" : ""
+        }${phase === "complete" ? " recap-lab-complete" : ""}`}
+        style={{ "--game-accent": accent } as CSSProperties}
       >
-        <div
-          ref={containerRef}
-          className={`boot-city${cityOnline ? " boot-city-online" : ""}${
-            wrongModule ? " game-shake" : ""
-          }`}
-        >
-          <div className="boot-city-grid" aria-hidden="true" />
-
-          <div className={`boot-flagship${repairedCount > 0 ? " boot-flagship-awake" : ""}${
-            cityOnline ? " boot-flagship-live" : ""
-          }`}>
-            <div className="boot-flagship-stage">
-              <FbxAssetStage
-                modelPath={FLEET_FLAGSHIP.asset}
-                accent={accent}
-                title={FLEET_FLAGSHIP.name}
-                variant="hero"
-                zoom={1.15}
-                modelRotation={[0.08, -0.42, 0]}
-              />
-            </div>
-            <div className="boot-flagship-label">
-              <span>{FLEET_FLAGSHIP.name}</span>
-              <small>Holding orbit</small>
-            </div>
-          </div>
-
-        <div className="boot-skyline boot-skyline-top" aria-hidden="true">
-          {Array.from({ length: 11 }, (_, index) => (
-            <span
-              key={`top-${index}`}
-              className={`boot-skyline-tower${
-                cityOnline || index < completedStages.length + 2 ? " boot-skyline-tower-on" : ""
-              }`}
-              style={{ height: `${26 + ((index * 9) % 42)}px` }}
-            />
-          ))}
-        </div>
-
-        <svg className="boot-network" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          {STAGES.map((bossStage) => {
-            const active = bossStage.id === stage.id && phase !== "complete";
-            const complete = includesId(completedStages, bossStage.id);
-            const index = stageIndexFor(bossStage.id);
-            const points: Record<StageId, Point> = {
-              power: { x: 22, y: 26 },
-              byte: { x: 78, y: 26 },
-              memory: { x: 22, y: 74 },
-              signal: { x: 78, y: 74 },
-              output: { x: 50, y: 86 },
-            };
-            const point = points[bossStage.id];
-
-            return (
-              <line
-                key={bossStage.id}
-                className={`boot-network-line${complete ? " boot-network-line-on" : ""}${
-                  active ? " boot-network-line-live" : ""
-                }`}
-                x1="50"
-                y1="50"
-                x2={point.x}
-                y2={point.y}
-                style={{ opacity: complete || active || cityOnline ? 1 : index < stageIndex ? 0.65 : 0.22 }}
-              />
-            );
-          })}
-        </svg>
-
-        <div className={`boot-core${cityOnline ? " boot-core-live" : ""}`} style={{ left: "50%", top: "50%" }}>
-          <div className="boot-core-ring boot-core-ring-one" />
-          <div className="boot-core-ring boot-core-ring-two" />
-          <div className="boot-core-heart">
-            <span className="boot-core-chip">CPU</span>
-            <small>{cityOnline ? "ONLINE" : "BOOTING"}</small>
+        <div className="recap-lab-grid" aria-hidden="true" />
+        <div className="recap-orbit recap-orbit-one" aria-hidden="true" />
+        <div className="recap-orbit recap-orbit-two" aria-hidden="true" />
+        <div className="recap-core" aria-hidden="true">
+          <div className="recap-core-ring recap-core-ring-outer" />
+          <div className="recap-core-ring recap-core-ring-inner" />
+          <div className="recap-core-heart">
+            <span>W1</span>
+            <small>{phase === "complete" ? "ONLINE" : "RECAP"}</small>
           </div>
         </div>
 
-        <section
-          className={`boot-module boot-module-power${
-            stage.id === "power" && phase === "playing" ? " boot-module-active" : ""
-          }${includesId(completedStages, "power") ? " boot-module-complete" : ""}${
-            wrongModule === "power" ? " boot-module-wrong" : ""
-          }`}
-          style={{ left: "22%", top: "26%" }}
-        >
-          <div className="boot-module-header">
-            <span>Power Rails</span>
-            <strong>Target 5</strong>
+        <section className="recap-question-card">
+          <div className="recap-question-head">
+            <span className="recap-question-kicker">{question.concept}</span>
+            <span className={`recap-question-state${
+              lastResult === "correct"
+                ? " recap-question-state-correct"
+                : lastResult === "wrong"
+                ? " recap-question-state-wrong"
+                : ""
+            }`}>
+              {phase === "complete"
+                ? "Week complete"
+                : lastResult === "correct"
+                ? "Correct"
+                : lastResult === "wrong"
+                ? "Check the clue"
+                : `Card ${questionIndex + 1}`}
+            </span>
           </div>
-          <div className="boot-bit-grid">
-            {BIT_POWERS.map((power, index) => (
-              <button
-                key={power}
-                className={`boot-bit${bits[index] ? " boot-bit-on" : ""}`}
-                onClick={() => handleBitToggle(index)}
-                type="button"
-                disabled={phase !== "playing" || stage.id !== "power"}
-              >
-                <span>{bits[index] ? 1 : 0}</span>
-                <small>{power}</small>
-              </button>
-            ))}
-          </div>
-          <div className="boot-module-readout">Current: {bitValue}</div>
-        </section>
 
-        <section
-          className={`boot-module boot-module-byte${
-            stage.id === "byte" && phase === "playing" ? " boot-module-active" : ""
-          }${includesId(completedStages, "byte") ? " boot-module-complete" : ""}${
-            wrongModule === "byte" ? " boot-module-wrong" : ""
-          }`}
-          style={{ left: "78%", top: "26%" }}
-        >
-          <div className="boot-module-header">
-            <span>Boot Byte</span>
-            <strong>{byteCharge}/8</strong>
-          </div>
-          <div className="boot-byte-grid">
-            {byteCells.map((active, index) => (
-              <button
-                key={index}
-                className={`boot-byte-cell${active ? " boot-byte-cell-on" : ""}`}
-                onClick={() => handleByteCellToggle(index)}
-                type="button"
-                disabled={phase !== "playing" || stage.id !== "byte"}
-              >
-                {active ? 1 : 0}
-              </button>
-            ))}
-          </div>
-          <div className={`boot-byte-capsule${byteCharge === 8 ? " boot-byte-capsule-sealed" : ""}`}>
-            Packet
-          </div>
-        </section>
+          <h3>{phase === "complete" ? `${playerName}, the lab is online.` : question.prompt}</h3>
+          <p className="recap-question-copy">
+            {phase === "complete"
+              ? `You cleared ${score} out of ${QUIZ_QUESTIONS.length} recap cards and rebooted the whole week.`
+              : statusText}
+          </p>
 
-        <section
-          className={`boot-module boot-module-memory${
-            stage.id === "memory" && phase === "playing" ? " boot-module-active" : ""
-          }${includesId(completedStages, "memory") ? " boot-module-complete" : ""}${
-            wrongModule === "memory" ? " boot-module-wrong" : ""
-          }`}
-          style={{ left: "22%", top: "74%" }}
-        >
-          <div className="boot-module-header">
-            <span>Memory Dock</span>
-            <strong>Live Patch</strong>
-          </div>
-          <div className="boot-memory-board">
-            <div className={`boot-patch-chip${memoryTarget ? ` boot-patch-chip-${memoryTarget}` : ""}`}>
-              Patch
+          {phase !== "complete" && (
+            <div className="recap-options-grid">
+              {question.options.map((option, index) => {
+                const isSelected = selectedIndex === index;
+                const isCorrect = index === question.correctIndex;
+                const isDisabled = disabledOptions.includes(index) || phase === "transition";
+
+                return (
+                  <button
+                    key={`${question.id}-${option}`}
+                    type="button"
+                    className={`recap-option${
+                      isSelected ? " recap-option-selected" : ""
+                    }${lastResult === "correct" && isCorrect ? " recap-option-correct" : ""}${
+                      lastResult === "wrong" && isSelected ? " recap-option-wrong" : ""
+                    }`}
+                    onClick={() => handleOptionSelect(index)}
+                    disabled={isDisabled}
+                  >
+                    <span className="recap-option-index">{String.fromCharCode(65 + index)}</span>
+                    <span className="recap-option-text">{option}</span>
+                  </button>
+                );
+              })}
             </div>
-            <button
-              className={`boot-memory-slot${memoryTarget === "ram" ? " boot-memory-slot-on" : ""}`}
-              onClick={() => handleMemoryChoice("ram")}
-              type="button"
-              disabled={phase !== "playing" || stage.id !== "memory"}
-            >
-              RAM
-            </button>
-            <button
-              className={`boot-memory-slot${memoryTarget === "storage" ? " boot-memory-slot-on" : ""}`}
-              onClick={() => handleMemoryChoice("storage")}
-              type="button"
-              disabled={phase !== "playing" || stage.id !== "memory"}
-            >
-              Storage
-            </button>
-          </div>
-        </section>
+          )}
 
-        <section
-          className={`boot-module boot-module-signal${
-            stage.id === "signal" && phase === "playing" ? " boot-module-active" : ""
-          }${includesId(completedStages, "signal") ? " boot-module-complete" : ""}${
-            wrongModule === "signal" ? " boot-module-wrong" : ""
-          }`}
-          style={{ left: "78%", top: "74%" }}
-        >
-          <div className="boot-module-header">
-            <span>Signal Route</span>
-            <strong>{"I -> P -> O"}</strong>
-          </div>
-          <div className="boot-signal-track">
-            {SIGNAL_ORDER.map((nodeId, index) => {
-              const active = signalPath.includes(nodeId);
-              return (
-                <button
-                  key={nodeId}
-                  className={`boot-signal-node${active ? " boot-signal-node-on" : ""}`}
-                  onClick={() => handleSignalNode(nodeId)}
-                  type="button"
-                  disabled={phase !== "playing" || stage.id !== "signal"}
-                >
-                  <span>{nodeId.slice(0, 1).toUpperCase()}</span>
-                  <small>{nodeId}</small>
-                  {index < SIGNAL_ORDER.length - 1 && <i className="boot-signal-link" aria-hidden="true" />}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section
-          className={`boot-module boot-module-output${
-            stage.id === "output" && phase === "playing" ? " boot-module-active" : ""
-          }${includesId(completedStages, "output") ? " boot-module-complete" : ""}${
-            wrongModule === "output" ? " boot-module-wrong" : ""
-          }`}
-          style={{ left: "50%", top: "86%" }}
-        >
-          <div className="boot-module-header">
-            <span>Output Array</span>
-            <strong>Choose Display</strong>
-          </div>
-          <div className="boot-output-options">
-            <button
-              className={`boot-output-btn${outputTarget === "screen" ? " boot-output-btn-on" : ""}`}
-              onClick={() => handleOutputChoice("screen")}
-              type="button"
-              disabled={phase !== "playing" || stage.id !== "output"}
-            >
-              Screen Wall
-            </button>
-            <button
-              className={`boot-output-btn${outputTarget === "speaker" ? " boot-output-btn-on" : ""}`}
-              onClick={() => handleOutputChoice("speaker")}
-              type="button"
-              disabled={phase !== "playing" || stage.id !== "output"}
-            >
-              Speaker Dock
-            </button>
-          </div>
-          <div className={`boot-screen-wall${cityOnline || outputTarget === "screen" ? " boot-screen-wall-on" : ""}`}>
-            <span>{cityOnline ? "CORE ONLINE" : outputTarget === "screen" ? "BOOTING..." : "READY"}</span>
+          <div className="recap-footer-strip">
+            <span>{phase === "complete" ? "Mastery check complete" : question.clue}</span>
+            <span>{combo} combo</span>
           </div>
         </section>
       </div>
