@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useRef, useCallback, type PointerEvent as ReactPointerEvent, type CSSProperties } from "react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  type PointerEvent as ReactPointerEvent,
+  type CSSProperties,
+} from "react";
 
 interface DragState {
   index: number;
@@ -8,6 +14,10 @@ interface DragState {
   startY: number;
   dx: number;
   dy: number;
+  pointerId: number;
+  originLeft: number;
+  originTop: number;
+  width: number;
 }
 
 export interface DropZone {
@@ -26,6 +36,7 @@ export function useDrag<T>(config: {
 }) {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const zonesRef = useRef<Map<string, HTMLElement>>(new Map());
+  const dragStateRef = useRef<DragState | null>(null);
 
   const registerDropZone = useCallback((zoneId: string) => {
     return (el: HTMLElement | null) => {
@@ -55,55 +66,93 @@ export function useDrag<T>(config: {
   const onPointerDown = useCallback(
     (index: number) => (e: ReactPointerEvent) => {
       e.preventDefault();
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
-      setDragState({
+      e.currentTarget.setPointerCapture(e.pointerId);
+      const rect = e.currentTarget.getBoundingClientRect();
+
+      const nextState: DragState = {
         index,
         startX: e.clientX,
         startY: e.clientY,
         dx: 0,
         dy: 0,
-      });
+        pointerId: e.pointerId,
+        originLeft: rect.left,
+        originTop: rect.top,
+        width: rect.width,
+      };
+
+      dragStateRef.current = nextState;
+      setDragState(nextState);
     },
     []
   );
 
   const onPointerMove = useCallback(
     (e: ReactPointerEvent) => {
-      if (!dragState) return;
-      setDragState((prev) =>
-        prev
-          ? {
-              ...prev,
-              dx: e.clientX - prev.startX,
-              dy: e.clientY - prev.startY,
-            }
-          : null
-      );
+      const activeDrag = dragStateRef.current;
+      if (!activeDrag || activeDrag.pointerId !== e.pointerId) return;
+
+      const nextState: DragState = {
+        ...activeDrag,
+        dx: e.clientX - activeDrag.startX,
+        dy: e.clientY - activeDrag.startY,
+      };
+
+      dragStateRef.current = nextState;
+      setDragState(nextState);
     },
-    [dragState]
+    []
   );
 
   const onPointerUp = useCallback(
     (e: ReactPointerEvent) => {
-      if (!dragState) return;
+      const activeDrag = dragStateRef.current;
+      if (!activeDrag || activeDrag.pointerId !== e.pointerId) return;
+
       const zoneId = findDropZone(e.clientX, e.clientY);
       if (zoneId && config.onDropInZone) {
-        config.onDropInZone(config.items[dragState.index], dragState.index, zoneId);
+        const item = config.items[activeDrag.index];
+        if (item) {
+          config.onDropInZone(item, activeDrag.index, zoneId);
+        }
       }
+
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+
+      dragStateRef.current = null;
       setDragState(null);
     },
-    [dragState, findDropZone, config]
+    [config, findDropZone]
   );
+
+  const onPointerCancel = useCallback((e: ReactPointerEvent) => {
+    const activeDrag = dragStateRef.current;
+    if (!activeDrag || activeDrag.pointerId !== e.pointerId) return;
+
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+
+    dragStateRef.current = null;
+    setDragState(null);
+  }, []);
 
   const getDragStyle = useCallback(
     (index: number): CSSProperties => {
       if (!dragState || dragState.index !== index) return {};
       return {
-        transform: `translate(${dragState.dx}px, ${dragState.dy}px) scale(1.08)`,
-        zIndex: 50,
-        opacity: 0.9,
+        position: "fixed",
+        left: dragState.originLeft + dragState.dx,
+        top: dragState.originTop + dragState.dy,
+        width: dragState.width,
+        transform: "scale(1.08)",
+        zIndex: 2000,
+        opacity: 0.96,
         transition: "none",
         cursor: "grabbing",
+        pointerEvents: "none",
       };
     },
     [dragState]
@@ -114,13 +163,14 @@ export function useDrag<T>(config: {
       onPointerDown: onPointerDown(index),
       onPointerMove,
       onPointerUp,
+      onPointerCancel,
       style: {
         ...getDragStyle(index),
         touchAction: "none" as const,
         cursor: dragState?.index === index ? "grabbing" : "grab",
       },
     }),
-    [onPointerDown, onPointerMove, onPointerUp, getDragStyle, dragState]
+    [onPointerCancel, onPointerDown, onPointerMove, onPointerUp, getDragStyle, dragState]
   );
 
   return {

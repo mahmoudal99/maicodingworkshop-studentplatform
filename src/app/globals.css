@@ -8244,6 +8244,8 @@ body::after {
   width: 100%;
   min-height: 0;
   max-height: none;
+  position: relative;
+  z-index: 3;
   overflow: visible;
 }
 
@@ -10536,16 +10538,19 @@ body::after {
   display: grid;
   gap: 0.8rem;
   align-content: start;
+  overflow: visible;
 }
 
 .computer-part-card {
+  position: relative;
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.04);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .computer-part-card-drag {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.8rem;

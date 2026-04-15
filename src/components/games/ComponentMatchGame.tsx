@@ -81,12 +81,12 @@ const PARTS: PartSpec[] = [
   },
 ];
 
-const SLOT_LAYOUT: { id: SlotId; title: string; hint: string }[] = [
-  { id: "input", title: "Input Bay", hint: "Commands and signals enter here" },
-  { id: "cpu", title: "CPU Socket", hint: "Machine brain" },
-  { id: "ram", title: "RAM Rail", hint: "Fast active memory" },
-  { id: "storage", title: "Storage Dock", hint: "Saved files vault" },
-  { id: "output", title: "Output Screen", hint: "Where results appear" },
+const SLOT_LAYOUT: { id: SlotId; clue: string }[] = [
+  { id: "input", clue: "Clicks, keys, and sensors enter here" },
+  { id: "cpu", clue: "Runs each instruction step by step" },
+  { id: "ram", clue: "Keeps active work close by" },
+  { id: "storage", clue: "Keeps saved files after shutdown" },
+  { id: "output", clue: "Shows or plays the final result" },
 ];
 
 const BURST_POSITIONS: Record<SlotId, { x: number; y: number }> = {
@@ -120,7 +120,7 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
 
   const [placedParts, setPlacedParts] = useState<Partial<Record<SlotId, PartSpec>>>({});
   const [statusText, setStatusText] = useState(
-    "Drag each missing part into the right slot to rebuild the workstation."
+    "Use the board clues to figure out where each missing part belongs."
   );
   const [wrongZone, setWrongZone] = useState<SlotId | null>(null);
   const [bootStep, setBootStep] = useState(0);
@@ -134,7 +134,7 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
   useEffect(() => {
     const player = userName || "Engineer";
     byteSay(`${player}, rebuild this workstation and we'll bring the bay back online.`, 2800);
-    echoSay("Each computer part has a different job in the system.", 2600);
+    echoSay("Match each part to the clue that describes its job.", 2600);
   }, [byteSay, echoSay, userName]);
 
   useEffect(() => {
@@ -182,7 +182,7 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
 
     if (destination !== part.id) {
       setWrongZone(destination);
-      setStatusText(`Not that slot. ${part.name} doesn't belong there.`);
+      setStatusText("That clue doesn't match this part. Read the board and try another slot.");
       recordWrong();
       playWrong();
       byteAlert("Spark pop. That slot needs a different part.");
@@ -245,8 +245,8 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
       accent={accent}
       header={{ room: "Parts Bay", step: `${Object.keys(placedParts).length} of ${PARTS.length} parts installed` }}
       missionTitle="Computer Builder"
-      missionObjective="Place the right hardware on the board, then run a power test."
-      subtitle="Each part wakes a different system inside the machine."
+      missionObjective="Read the board clues, match each hardware part to its job, then run a power test."
+      subtitle="The tray tells you what each part does. The board tells you where that job belongs."
       companions={[
         {
           character: byteCharacter,
@@ -264,7 +264,7 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
         <div className="computer-builder-panel">
           <div className="computer-builder-panel-header">
             <span>Parts Tray</span>
-            <span>{remainingParts.length > 0 ? "Drag parts into the chassis" : "Ready for power test"}</span>
+            <span>{remainingParts.length > 0 ? "Read the clues, then drag parts into the chassis" : "Ready for power test"}</span>
           </div>
 
           <div className="computer-builder-tray">
@@ -282,15 +282,6 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
                       <span>{part.shortLabel}</span>
                     </div>
                   </div>
-
-                  <button
-                    className="computer-part-install"
-                    onClick={() => placePart(part, part.id)}
-                    type="button"
-                    disabled={phase !== "building"}
-                  >
-                    Install
-                  </button>
                 </div>
               );
             })}
@@ -360,10 +351,7 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
                 style={part ? ({ "--part-color": part.color } as React.CSSProperties) : undefined}
               >
                 {!part ? (
-                  <>
-                    <span className="motherboard-slot-title">{slot.title}</span>
-                    <span className="motherboard-slot-hint">{slot.hint}</span>
-                  </>
+                  <span className="motherboard-slot-hint">{slot.clue}</span>
                 ) : (
                   <div className="motherboard-installed-part">
                     <div className="computer-part-chip motherboard-installed-chip">{part.glyph}</div>
