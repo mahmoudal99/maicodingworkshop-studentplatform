@@ -16,7 +16,7 @@ const siteUrl = (() => {
 })();
 
 const siteDescription =
-  "Interactive spaceship-themed coding workshop for ages 8–14. Learn binary, sequencing, memory, and real code through playable missions.";
+  "Interactive spaceship-themed coding workshop for ages 12–17. Learn binary, sequencing, memory, and real code through playable missions.";
 
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
@@ -39,13 +39,13 @@ export const metadata: Metadata = {
   description: siteDescription,
   applicationName: "Think Like a Programmer",
   keywords: [
-    "kids coding",
+    "teen coding",
     "coding workshop",
     "binary for kids",
-    "programming for children",
+    "programming for teens",
     "interactive coding game",
     "spaceship coding",
-    "coding course ages 8-14",
+    "coding course ages 12-17",
   ],
   openGraph: {
     type: "website",

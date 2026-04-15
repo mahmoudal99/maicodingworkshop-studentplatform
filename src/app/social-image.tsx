@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
 export const alt =
-  "Think Like a Programmer — an interactive spaceship-themed coding workshop for ages 8–14.";
+  "Think Like a Programmer — an interactive spaceship-themed coding workshop for ages 12–17.";
 
 export const size = {
   width: 1200,
@@ -192,7 +192,7 @@ export async function createSocialImage() {
                   color: "#74E589",
                 }}
               >
-                SPACESHIP MISSIONS FOR AGES 8–14
+                  SPACESHIP MISSIONS FOR AGES 12–17
               </div>
               <div
                 style={{
