@@ -1,6 +1,10 @@
 "use client";
 
-const STREAK_STORAGE_KEY = "tlp-streak-dates";
+export const LEGACY_STREAK_STORAGE_KEY = "tlp-streak-dates";
+
+export function getStreakStorageKey(userId: string) {
+  return `tlp-streak-dates:${userId}`;
+}
 
 function toDateKey(date: Date) {
   const year = date.getFullYear();
@@ -15,21 +19,13 @@ function shiftDays(date: Date, amount: number) {
   return next;
 }
 
-export function readStreakDates() {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(STREAK_STORAGE_KEY);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : [];
-  } catch {
-    return [];
-  }
+function sanitizeDates(parsed: unknown) {
+  return Array.isArray(parsed)
+    ? parsed.filter((value): value is string => typeof value === "string")
+    : [];
 }
 
-export function getCurrentStreak(dates = readStreakDates()) {
+function computeCurrentStreak(dates: string[]) {
   const uniqueDates = new Set(dates);
   const today = new Date();
   let streak = 0;
@@ -43,18 +39,49 @@ export function getCurrentStreak(dates = readStreakDates()) {
   return streak;
 }
 
-export function recordTodayForStreak() {
+export function readStreakDates(userId?: string) {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw =
+      (userId ? window.localStorage.getItem(getStreakStorageKey(userId)) : null) ??
+      window.localStorage.getItem(LEGACY_STREAK_STORAGE_KEY);
+    if (!raw) return [];
+
+    const parsed = sanitizeDates(JSON.parse(raw));
+
+    if (userId && !window.localStorage.getItem(getStreakStorageKey(userId))) {
+      window.localStorage.setItem(
+        getStreakStorageKey(userId),
+        JSON.stringify(parsed)
+      );
+    }
+
+    return parsed;
+  } catch {
+    return [];
+  }
+}
+
+export function getCurrentStreak(userId?: string) {
+  return computeCurrentStreak(readStreakDates(userId));
+}
+
+export function recordTodayForStreak(userId?: string) {
   if (typeof window === "undefined") return 0;
 
-  const dates = readStreakDates();
+  const dates = readStreakDates(userId);
   const todayKey = toDateKey(new Date());
   const merged = Array.from(new Set([...dates, todayKey])).sort();
 
   try {
-    window.localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(merged));
+    window.localStorage.setItem(
+      userId ? getStreakStorageKey(userId) : LEGACY_STREAK_STORAGE_KEY,
+      JSON.stringify(merged)
+    );
   } catch {
     // Ignore storage failures and still compute from the in-memory value.
   }
 
-  return getCurrentStreak(merged);
+  return computeCurrentStreak(merged);
 }

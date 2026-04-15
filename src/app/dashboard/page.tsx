@@ -16,7 +16,7 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 export default function DashboardPage() {
   const router = useRouter();
   const { userId, userName, versionKey, loaded } = useUser();
-  const { xp, getOverallProgress, getWeekProgress } = useProgress();
+  const { xp, getOverallProgress, getWeekProgress, progressLoaded } = useProgress();
   const { isWeekAdminUnlocked, adminLoaded, resourcesUnlocked } = useAdminUnlock();
   const [typedName, setTypedName] = useState("");
   const [progressWidth, setProgressWidth] = useState("0%");
@@ -55,7 +55,7 @@ export default function DashboardPage() {
   }, [userName, loaded, router]);
 
   useEffect(() => {
-    if (!loaded || !userId || !userName) return;
+    if (!loaded || !progressLoaded || !userId || !userName) return;
 
     syncLeaderboard({
       userId,
@@ -63,13 +63,13 @@ export default function DashboardPage() {
       versionKey,
       totalXp: xp,
       deltaXp: 0,
-      streak: getCurrentStreak(),
+      streak: getCurrentStreak(userId),
       completedCount: overall.done,
       currentWeek: overall.currentWeek,
     }).catch(() => {
       // Ignore sync issues on dashboard load.
     });
-  }, [loaded, overall.currentWeek, overall.done, userId, userName, versionKey, xp]);
+  }, [loaded, overall.currentWeek, overall.done, progressLoaded, userId, userName, versionKey, xp]);
 
   // Animate progress bar
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function DashboardPage() {
     return () => clearTimeout(t);
   }, [overall.percent]);
 
-  if (!loaded || !adminLoaded || !userName) return null;
+  if (!loaded || !adminLoaded || !progressLoaded || !userName) return null;
 
   return (
     <>

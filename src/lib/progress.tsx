@@ -9,10 +9,12 @@ import {
   type ReactNode,
 } from "react";
 import { WEEKS_A, WEEKS_B } from "./data";
+import { useUser } from "./store";
 
 interface ProgressState {
   completed: Record<string, boolean>;
   xp: number;
+  progressLoaded: boolean;
   toggle: (key: string) => void;
   isCompleted: (key: string) => boolean;
   getWeekProgress: (
@@ -30,13 +32,18 @@ interface ProgressState {
 const ProgressContext = createContext<ProgressState>({
   completed: {},
   xp: 0,
+  progressLoaded: false,
   toggle: () => {},
   isCompleted: () => false,
   getWeekProgress: () => ({ done: 0, total: 0, percent: 0 }),
   getOverallProgress: () => ({ done: 0, total: 0, percent: 0, currentWeek: 1 }),
 });
 
-const STORAGE_KEY = "tlp-progress";
+export const LEGACY_PROGRESS_STORAGE_KEY = "tlp-progress";
+
+export function getProgressStorageKey(userId: string) {
+  return `tlp-progress:${userId}`;
+}
 
 function computeXp(completed: Record<string, boolean>): number {
   let xp = 0;
@@ -52,34 +59,51 @@ function computeXp(completed: Record<string, boolean>): number {
 }
 
 export function ProgressProvider({ children }: { children: ReactNode }) {
+  const { userId, loaded: userLoaded } = useUser();
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [xp, setXp] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  const [loadedUserId, setLoadedUserId] = useState("");
+  const progressLoaded = Boolean(userId) && loadedUserId === userId;
 
-  // Load from localStorage on mount
   useEffect(() => {
+    if (!userLoaded || !userId) return;
+
+    setLoadedUserId("");
+    setCompleted({});
+    setXp(0);
+
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
+      const storageKey = getProgressStorageKey(userId);
+      const raw =
+        localStorage.getItem(storageKey) ??
+        localStorage.getItem(LEGACY_PROGRESS_STORAGE_KEY);
+
+      if (typeof raw === "string") {
         const parsed = JSON.parse(raw) as Record<string, boolean>;
         setCompleted(parsed);
         setXp(computeXp(parsed));
+
+        if (!localStorage.getItem(storageKey)) {
+          localStorage.setItem(storageKey, JSON.stringify(parsed));
+        }
       }
     } catch {
       // ignore
     }
-    setLoaded(true);
-  }, []);
+    setLoadedUserId(userId);
+  }, [userId, userLoaded]);
 
-  // Save to localStorage on every change (after initial load)
   useEffect(() => {
-    if (!loaded) return;
+    if (!progressLoaded || !userId) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(completed));
+      localStorage.setItem(
+        getProgressStorageKey(userId),
+        JSON.stringify(completed)
+      );
     } catch {
       // ignore
     }
-  }, [completed, loaded]);
+  }, [completed, progressLoaded, userId]);
 
   const toggle = useCallback((key: string) => {
     setCompleted((prev) => {
@@ -172,6 +196,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       value={{
         completed,
         xp,
+        progressLoaded,
         toggle,
         isCompleted,
         getWeekProgress,

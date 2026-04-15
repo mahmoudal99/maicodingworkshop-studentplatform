@@ -97,13 +97,13 @@ function leagueIndexForRank(rank: number) {
 export default function LeaderboardPage() {
   const router = useRouter();
   const { userId, userName, versionKey, loaded } = useUser();
-  const { xp, getOverallProgress } = useProgress();
+  const { xp, getOverallProgress, progressLoaded } = useProgress();
   const [entries, setEntries] = useState<ClassLeaderboardEntry[]>([]);
   const [seasonId, setSeasonId] = useState("");
   const [loading, setLoading] = useState(true);
 
   const overall = getOverallProgress(versionKey);
-  const streak = getCurrentStreak();
+  const streak = getCurrentStreak(userId);
 
   useEffect(() => {
     if (loaded && !userName) {
@@ -112,7 +112,7 @@ export default function LeaderboardPage() {
   }, [loaded, router, userName]);
 
   useEffect(() => {
-    if (!loaded || !userId || !userName) return;
+    if (!loaded || !progressLoaded || !userId || !userName) return;
 
     let cancelled = false;
 
@@ -149,7 +149,7 @@ export default function LeaderboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [loaded, overall.currentWeek, overall.done, streak, userId, userName, versionKey, xp]);
+  }, [loaded, overall.currentWeek, overall.done, progressLoaded, streak, userId, userName, versionKey, xp]);
 
   const userRank = entries.findIndex((entry) => entry.userId === userId) + 1;
   const leagueIndex = leagueIndexForRank(userRank || entries.length || 1);
@@ -169,7 +169,7 @@ export default function LeaderboardPage() {
     return entries.find((entry) => entry.userId === userId)?.weeklyXp ?? 0;
   }, [entries, userId]);
 
-  if (!loaded || !userName) return null;
+  if (!loaded || !progressLoaded || !userName) return null;
 
   return (
     <>

@@ -2,6 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useUser } from "@/lib/store";
+import {
+  LEGACY_PROGRESS_STORAGE_KEY,
+  getProgressStorageKey,
+} from "@/lib/progress";
+import {
+  LEGACY_STREAK_STORAGE_KEY,
+  getStreakStorageKey,
+} from "@/lib/streak";
 
 const WEEK_LABELS = [
   "Week 1 — How Computers Think",
@@ -230,8 +238,10 @@ export default function AdminPage() {
 
         if (deletingCurrentUser && typeof window !== "undefined") {
           window.localStorage.removeItem("tlp-user");
-          window.localStorage.removeItem("tlp-progress");
-          window.localStorage.removeItem("tlp-streak-dates");
+          window.localStorage.removeItem(LEGACY_PROGRESS_STORAGE_KEY);
+          window.localStorage.removeItem(getProgressStorageKey(student.userId));
+          window.localStorage.removeItem(LEGACY_STREAK_STORAGE_KEY);
+          window.localStorage.removeItem(getStreakStorageKey(student.userId));
           window.localStorage.removeItem("tlp-wireframe");
           window.location.replace("/");
           return;

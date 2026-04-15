@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@/lib/store";
 import { useProgress } from "@/lib/progress";
+import { useAdminUnlock } from "@/lib/admin-unlock";
 import { WEEKS_A, WEEKS_B } from "@/lib/data";
 import { getGameId } from "@/lib/game-map";
 import BinaryCountingGame from "@/components/games/BinaryCountingGame";
@@ -21,7 +22,8 @@ export default function LessonPage() {
   const params = useParams();
   const router = useRouter();
   const { userName, versionKey, loaded } = useUser();
-  const { toggle, isCompleted, getWeekProgress } = useProgress();
+  const { toggle, isCompleted, getWeekProgress, progressLoaded } = useProgress();
+  const { isWeekAdminUnlocked, adminLoaded } = useAdminUnlock();
   const [showResult, setShowResult] = useState(false);
   const [xpBurst, setXpBurst] = useState(false);
   const [earnedXp, setEarnedXp] = useState(false);
@@ -55,6 +57,11 @@ export default function LessonPage() {
     ? Math.round(((lessonIndex + (completed ? 1 : 0)) / allItems.length) * 100)
     : 0;
 
+  const adminUnlocked = isWeekAdminUnlocked(weekId + 1);
+  const prevWeekComplete =
+    weekId === 0 || (week ? getWeekProgress(versionKey, weekId - 1).percent === 100 : false);
+  const weekAccessible = adminUnlocked && prevWeekComplete;
+
   // Check if previous lesson is completed (sequential lock)
   const prevComplete = lessonIndex === 0 || (allItems[lessonIndex - 1] && isCompleted(allItems[lessonIndex - 1].key));
 
@@ -62,10 +69,14 @@ export default function LessonPage() {
     if (loaded && !userName) {
       router.replace("/");
     }
-    if (loaded && userName && !prevComplete) {
+    if (loaded && adminLoaded && progressLoaded && userName && !weekAccessible) {
+      router.replace("/dashboard");
+      return;
+    }
+    if (loaded && adminLoaded && progressLoaded && userName && weekAccessible && !prevComplete) {
       router.replace(`/week/${weekId}`);
     }
-  }, [userName, loaded, prevComplete, weekId, router]);
+  }, [adminLoaded, loaded, prevComplete, progressLoaded, router, userName, weekAccessible, weekId]);
 
   const handleComplete = useCallback(() => {
     if (!lesson) return;
@@ -90,7 +101,7 @@ export default function LessonPage() {
     }
   }, [lessonIndex, allItems.length, weekId, router]);
 
-  if (!loaded || !userName || !week || !lesson || !prevComplete) return null;
+  if (!loaded || !adminLoaded || !progressLoaded || !userName || !week || !lesson || !weekAccessible || !prevComplete) return null;
 
   const gameId = getGameId(versionKey, weekId, lesson.sectionIndex, lesson.itemIndex);
   const continueLabel =

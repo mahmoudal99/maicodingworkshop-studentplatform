@@ -41,6 +41,8 @@ export function AdminUnlockProvider({ children }: { children: ReactNode }) {
   const [resourcesUnlocked, setResourcesUnlocked] = useState(false);
   const [adminLoaded, setAdminLoaded] = useState(false);
 
+  const safeUnlockedWeeks = [1];
+
   useEffect(() => {
     fetch("/api/settings")
       .then((res) => res.json())
@@ -48,7 +50,7 @@ export function AdminUnlockProvider({ children }: { children: ReactNode }) {
         if (Array.isArray(data.unlockedWeeks)) {
           setUnlockedWeeks(data.unlockedWeeks);
         } else {
-          setUnlockedWeeks([1, 2, 3, 4, 5, 6]);
+          setUnlockedWeeks(safeUnlockedWeeks);
         }
         if (data.weekLinks && typeof data.weekLinks === "object") {
           setWeekLinks(data.weekLinks);
@@ -61,7 +63,10 @@ export function AdminUnlockProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch(() => {
-        setUnlockedWeeks([1, 2, 3, 4, 5, 6]);
+        setUnlockedWeeks(safeUnlockedWeeks);
+        setWeekLinks({});
+        setGlobalResources([]);
+        setResourcesUnlocked(false);
       })
       .finally(() => setAdminLoaded(true));
   }, []);

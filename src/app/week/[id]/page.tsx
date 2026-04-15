@@ -59,7 +59,7 @@ export default function WeekDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { userName, versionKey, loaded } = useUser();
-  const { getWeekProgress } = useProgress();
+  const { getWeekProgress, progressLoaded } = useProgress();
   const { isWeekAdminUnlocked, adminLoaded, weekLinks: adminWeekLinks } = useAdminUnlock();
   const [modalTerm, setModalTerm] = useState<GlossaryEntry | null>(null);
 
@@ -75,12 +75,12 @@ export default function WeekDetailPage() {
     if (loaded && !userName) {
       router.replace("/");
     }
-    if (loaded && adminLoaded && userName && !prevComplete) {
+    if (loaded && adminLoaded && progressLoaded && userName && !prevComplete) {
       router.replace("/dashboard");
     }
-  }, [userName, loaded, adminLoaded, prevComplete, router]);
+  }, [userName, loaded, adminLoaded, progressLoaded, prevComplete, router]);
 
-  if (!loaded || !adminLoaded || !userName || !week || !prevComplete) return null;
+  if (!loaded || !adminLoaded || !progressLoaded || !userName || !week || !prevComplete) return null;
 
   const weekProgress = getWeekProgress(versionKey, id);
   const isWeekComplete = weekProgress.total > 0 && weekProgress.percent === 100;

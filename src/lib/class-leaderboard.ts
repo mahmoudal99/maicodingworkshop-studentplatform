@@ -121,12 +121,13 @@ export async function upsertClassLeaderboardEntry(input: {
 
   if (existingIndex >= 0) {
     const existing = state.entries[existingIndex];
+    const xpIncrease = Math.max(0, input.totalXp - existing.totalXp);
     state.entries[existingIndex] = {
       ...existing,
       userName: input.userName,
       versionKey: input.versionKey,
       totalXp: input.totalXp,
-      weeklyXp: Math.max(0, existing.weeklyXp + input.deltaXp),
+      weeklyXp: Math.max(0, existing.weeklyXp + xpIncrease),
       streak: input.streak,
       completedCount: input.completedCount,
       currentWeek: input.currentWeek,

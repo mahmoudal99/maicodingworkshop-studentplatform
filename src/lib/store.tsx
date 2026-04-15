@@ -19,6 +19,12 @@ const UserContext = createContext<UserState>({
 });
 
 const USER_STORAGE_KEY = "tlp-user";
+const LEGACY_PROGRESS_STORAGE_KEY = "tlp-progress";
+const LEGACY_STREAK_STORAGE_KEY = "tlp-streak-dates";
+
+function normalizeStudentName(name: string) {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
 
 function createUserId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -62,10 +68,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [userId, userName, versionKey, loaded]);
 
   const setUser = useCallback((name: string, version: "A" | "B") => {
-    setUserId((current) => current || createUserId());
-    setUserName(name);
+    const nextName = name.trim();
+    const nextNormalized = normalizeStudentName(nextName);
+    const currentNormalized = normalizeStudentName(userName);
+
+    if (
+      typeof window !== "undefined" &&
+      userName &&
+      currentNormalized !== nextNormalized
+    ) {
+      window.localStorage.removeItem(LEGACY_PROGRESS_STORAGE_KEY);
+      window.localStorage.removeItem(LEGACY_STREAK_STORAGE_KEY);
+    }
+
+    setUserId((current) => {
+      if (current && currentNormalized === nextNormalized) {
+        return current;
+      }
+      return createUserId();
+    });
+    setUserName(nextName);
     setVersionKey(version);
-  }, []);
+  }, [userName]);
 
   return (
     <UserContext.Provider value={{ userId, userName, versionKey, loaded, setUser }}>

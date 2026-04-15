@@ -8,14 +8,14 @@ import { getCurrentStreak } from "@/lib/streak";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { userName } = useUser();
+  const { userId, userName } = useUser();
   const [streak, setStreak] = useState(0);
 
   // Don't render on the onboarding page
   if (pathname === "/") return null;
 
   useEffect(() => {
-    const syncStreak = () => setStreak(getCurrentStreak());
+    const syncStreak = () => setStreak(getCurrentStreak(userId));
 
     syncStreak();
     window.addEventListener("focus", syncStreak);
@@ -25,7 +25,7 @@ export default function Navbar() {
       window.removeEventListener("focus", syncStreak);
       document.removeEventListener("visibilitychange", syncStreak);
     };
-  }, [pathname]);
+  }, [pathname, userId]);
 
   return (
     <nav className="site-nav">

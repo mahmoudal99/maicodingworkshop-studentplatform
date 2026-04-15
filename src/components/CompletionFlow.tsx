@@ -117,7 +117,7 @@ export default function CompletionFlow({
     if (syncedRef.current) return;
     syncedRef.current = true;
 
-    const currentStreak = recordTodayForStreak();
+    const currentStreak = recordTodayForStreak(userId);
     if (userId && userName) {
       syncLeaderboard({
         userId,
