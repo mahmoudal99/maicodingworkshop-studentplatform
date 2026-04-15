@@ -6,6 +6,18 @@ import { ProgressProvider } from "@/lib/progress";
 import { AdminUnlockProvider } from "@/lib/admin-unlock";
 import ParticleCanvas from "@/components/ParticleCanvas";
 
+const siteUrl = (() => {
+  const value =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.URL ||
+    "https://maicodingworkshop.netlify.app";
+
+  return value.startsWith("http") ? value : `https://${value}`;
+})();
+
+const siteDescription =
+  "Interactive spaceship-themed coding workshop for ages 8–14. Learn binary, sequencing, memory, and real code through playable missions.";
+
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin"],
@@ -19,9 +31,38 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Think Like a Programmer -- 6-Week Coding Course",
-  description:
-    "A welcoming guide to six weeks of building, experimenting, and learning to code.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Think Like a Programmer | Interactive Kids Coding Workshop",
+    template: "%s | Think Like a Programmer",
+  },
+  description: siteDescription,
+  applicationName: "Think Like a Programmer",
+  keywords: [
+    "kids coding",
+    "coding workshop",
+    "binary for kids",
+    "programming for children",
+    "interactive coding game",
+    "spaceship coding",
+    "coding course ages 8-14",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: "Think Like a Programmer",
+    title: "Think Like a Programmer",
+    description: siteDescription,
+    locale: "en_IE",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Think Like a Programmer",
+    description: siteDescription,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
