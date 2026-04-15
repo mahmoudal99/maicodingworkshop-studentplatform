@@ -2139,6 +2139,63 @@ body::after {
   .lesson-card-text { font-size: 15px; }
 }
 
+@media (max-width: 720px) {
+  .lesson-page {
+    background-size: 28px 28px;
+  }
+
+  .lesson-topbar {
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .lesson-close {
+    width: 36px;
+    height: 36px;
+  }
+
+  .lesson-progress-bar {
+    height: 12px;
+  }
+
+  .lesson-xp-count {
+    font-size: 12px;
+  }
+
+  .lesson-content-game {
+    max-width: 100%;
+    padding: 0.45rem 0.7rem 1.15rem;
+  }
+
+  .lesson-content-game .lesson-section-badge {
+    margin-bottom: 0.7rem;
+  }
+
+  .lesson-section-badge {
+    font-size: 11px;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 520px) {
+  .lesson-topbar {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .lesson-content-game {
+    padding: 0.35rem 0.55rem 1rem;
+  }
+
+  .lesson-progress-bar {
+    height: 10px;
+  }
+
+  .lesson-xp-count {
+    font-size: 11px;
+  }
+}
+
 /* Hide lesson content when completion flow is showing */
 .lesson-content-hidden {
   display: none;
@@ -6155,7 +6212,7 @@ body::after {
 
 @media (max-width: 760px) {
   .robotlab-room {
-    min-height: 500px;
+    min-height: 460px;
   }
 
   .robotlab-room-hud {
@@ -6170,6 +6227,171 @@ body::after {
   .robotlab-gate-strip {
     top: auto;
     bottom: 1rem;
+  }
+
+  .robotlab-room-hud {
+    padding: 0.68rem 0.78rem;
+    border-radius: 14px;
+  }
+
+  .robotlab-room-goal strong {
+    font-size: 15px;
+  }
+
+  .robotlab-command-bay,
+  .robotlab-console-grid,
+  .robotlab-console-side {
+    gap: 0.75rem;
+  }
+
+  .robotlab-summary-card {
+    padding: 0.78rem 0.85rem;
+    border-radius: 16px;
+  }
+
+  .robotlab-summary-card strong {
+    font-size: 15px;
+  }
+
+  .robotlab-summary-card p,
+  .robotlab-status-text {
+    font-size: 13px;
+  }
+
+  .robotlab-summary-icon {
+    width: 28px;
+    height: 28px;
+    top: 0.7rem;
+    right: 0.7rem;
+  }
+
+  .robotlab-card {
+    padding: 0.78rem 0.82rem 0.84rem;
+    border-radius: 18px;
+  }
+
+  .robotlab-editor-shell {
+    min-height: 188px;
+    padding: 0.7rem;
+    border-radius: 16px;
+  }
+
+  .robotlab-editor {
+    min-height: 158px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .robotlab-editor-actions {
+    gap: 0.5rem;
+  }
+
+  .robotlab-run-btn,
+  .robotlab-secondary-btn {
+    padding: 0.7rem 0.82rem;
+    border-radius: 12px;
+    font-size: 11px;
+  }
+
+  .robotlab-chip {
+    padding: 0.5rem 0.58rem;
+    font-size: 11px;
+  }
+
+  .robotlab-status-strip {
+    gap: 0.65rem;
+    padding: 0.75rem 0.8rem;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 520px) {
+  .robotlab-room {
+    min-height: 420px;
+  }
+
+  .robotlab-room-hud {
+    left: 0.7rem;
+    right: 0.7rem;
+    top: 0.7rem;
+    padding: 0.58rem 0.68rem;
+  }
+
+  .robotlab-room-goal strong {
+    font-size: 14px;
+  }
+
+  .robotlab-object-label,
+  .robotlab-kicker,
+  .robotlab-chip-hint,
+  .robotlab-phase,
+  .robotlab-room-hud span,
+  .robotlab-status-chip,
+  .robotlab-status-combo {
+    font-size: 10px;
+  }
+
+  .robotlab-object-lamp {
+    width: 88px;
+    height: 88px;
+  }
+
+  .robotlab-object-switch {
+    width: 84px;
+    height: 98px;
+  }
+
+  .robotlab-object-door {
+    width: 116px;
+    height: 128px;
+  }
+
+  .robotlab-object-cube {
+    width: 64px;
+    height: 64px;
+  }
+
+  .robotlab-object-pad {
+    width: 92px;
+    height: 92px;
+  }
+
+  .robotlab-bot {
+    width: 72px;
+    height: 72px;
+  }
+
+  .robotlab-gate-strip {
+    right: 0.7rem;
+    bottom: 0.7rem;
+    padding: 0.55rem 0.6rem;
+    border-radius: 14px;
+  }
+
+  .robotlab-summary-card {
+    padding: 0.68rem 0.74rem;
+  }
+
+  .robotlab-summary-card strong {
+    font-size: 14px;
+  }
+
+  .robotlab-card-head {
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .robotlab-editor-shell {
+    min-height: 172px;
+  }
+
+  .robotlab-editor {
+    min-height: 144px;
+    font-size: 12px;
+  }
+
+  .robotlab-editor-actions {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -8421,6 +8643,109 @@ body::after {
   .mission-bottom-bar-icon { width: 44px; height: 44px; }
   .mission-bottom-bar-label { font-size: 18px; }
   .mission-bottom-bar-action .game-btn { min-width: 140px; padding: 12px 20px; }
+}
+
+@media (max-width: 720px) {
+  .mission-panel {
+    padding: 0.95rem;
+    border-radius: 20px;
+  }
+
+  .mission-copy {
+    gap: 0.55rem;
+  }
+
+  .mission-kicker,
+  .mission-stage-titlebar,
+  .mission-stage-state {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  .mission-title {
+    font-size: clamp(28px, 8vw, 40px);
+    line-height: 1.05;
+  }
+
+  .mission-description {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .mission-subtitle {
+    padding: 0.58rem 0.75rem;
+    border-radius: 14px;
+    font-size: 12px;
+  }
+
+  .mission-stage {
+    gap: 0.75rem;
+  }
+
+  .mission-stage-main {
+    min-height: 280px;
+  }
+
+  .mission-stage-controls {
+    padding: 0.78rem;
+    border-radius: 18px;
+    gap: 0.7rem;
+  }
+
+  .mission-bottom-bar {
+    padding: 0.85rem 0.85rem max(0.85rem, env(safe-area-inset-bottom));
+  }
+
+  .mission-bottom-bar-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+  }
+
+  .mission-bottom-bar-status {
+    gap: 0.75rem;
+  }
+
+  .mission-bottom-bar-action,
+  .mission-bottom-bar-action .game-btn {
+    width: 100%;
+  }
+
+  .game-scene-complete .mission-panel {
+    padding-bottom: 7rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .mission-panel {
+    padding: 0.8rem;
+    border-radius: 18px;
+  }
+
+  .mission-title {
+    font-size: clamp(24px, 9vw, 34px);
+  }
+
+  .mission-description {
+    font-size: 13px;
+  }
+
+  .mission-stage-main {
+    min-height: 240px;
+  }
+
+  .mission-stage-controls {
+    padding: 0.72rem;
+  }
+
+  .mission-bottom-bar-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mission-bottom-bar-label {
+    font-size: 16px;
+  }
 }
 
 /* When game is complete, leave room for the fixed bottom bar */
@@ -10721,7 +11046,7 @@ body::after {
 
 @media (max-width: 720px) {
   .motherboard-shell {
-    min-height: 700px;
+    min-height: 540px;
   }
 
   .motherboard-slot-input {
@@ -10787,6 +11112,85 @@ body::after {
   .motherboard-fan {
     right: 10%;
     bottom: 4%;
+  }
+
+  .computer-builder-stage {
+    padding: 0.7rem;
+    border-radius: 20px;
+  }
+
+  .computer-builder-panel {
+    gap: 0.75rem;
+  }
+
+  .computer-builder-panel-header span:first-child {
+    font-size: 12px;
+  }
+
+  .computer-builder-panel-header span:last-child,
+  .computer-builder-ready {
+    font-size: 12px;
+  }
+
+  .computer-builder-tray {
+    gap: 0.6rem;
+  }
+
+  .computer-part-card-drag {
+    gap: 0.65rem;
+    padding: 0.75rem;
+  }
+
+  .computer-part-chip {
+    min-width: 52px;
+    min-height: 52px;
+    font-size: 13px;
+  }
+
+  .computer-part-copy strong {
+    font-size: 13px;
+  }
+
+  .computer-part-copy span,
+  .motherboard-slot-hint,
+  .motherboard-installed-copy span {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .motherboard-slot {
+    min-height: 82px;
+    padding: 0.62rem;
+    border-radius: 18px;
+  }
+
+  .motherboard-slot-title {
+    font-size: 11px;
+  }
+
+  .motherboard-installed-part {
+    gap: 0.55rem;
+  }
+
+  .motherboard-installed-chip {
+    min-width: 52px;
+  }
+
+  .motherboard-installed-copy strong {
+    font-size: 12px;
+  }
+
+  .motherboard-monitor {
+    height: 68px;
+  }
+
+  .motherboard-monitor-screen {
+    font-size: 12px;
+  }
+
+  .motherboard-fan {
+    width: 60px;
+    height: 60px;
   }
 }
 
@@ -11369,6 +11773,128 @@ body::after {
     left: 12px;
     right: 12px;
     bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .spacegame-floating-actions-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .spacegame-board-wrap {
+    padding: 0.7rem;
+    border-radius: 20px;
+  }
+
+  .spacegame-board {
+    border-radius: 20px;
+  }
+
+  .spacegame-ship {
+    width: 58px;
+    height: 58px;
+  }
+
+  .spacegame-ship-shell {
+    padding: 5px;
+    border-radius: 18px;
+  }
+
+  .spacegame-mission-card {
+    padding: 0.7rem;
+    border-radius: 14px;
+  }
+
+  .spacegame-mission-card strong {
+    font-size: 16px;
+  }
+
+  .spacegame-mission-card p,
+  .spacegame-command-copy small,
+  .spacegame-queue-empty {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .spacegame-command-chip {
+    gap: 0.65rem;
+    padding: 0.62rem 0.7rem;
+    border-radius: 12px;
+  }
+
+  .spacegame-command-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+
+  .spacegame-command-copy strong {
+    font-size: 13px;
+  }
+
+  .spacegame-queue-list {
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 0.45rem;
+  }
+
+  .spacegame-queue-item {
+    min-height: 94px;
+    padding: 0.55rem;
+    gap: 0.28rem;
+  }
+
+  .spacegame-queue-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .spacegame-queue-name {
+    font-size: 11px;
+  }
+
+  .spacegame-floating-actions {
+    position: sticky;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    margin-top: 0.85rem;
+    z-index: 6;
+  }
+
+  .spacegame-floating-actions-inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    padding: 0.7rem;
+    border-radius: 18px;
+  }
+
+  .spacegame-floating-actions-inner .spacegame-secondary-btn,
+  .spacegame-floating-actions-inner .spacegame-run-btn {
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 520px) {
+  .spacegame-board-wrap {
+    padding: 0.55rem;
+  }
+
+  .spacegame-board {
+    border-radius: 18px;
+  }
+
+  .spacegame-cell-start::after {
+    left: 6px;
+    top: 6px;
+    font-size: 10px;
+  }
+
+  .spacegame-asteroid {
+    inset: 20%;
+  }
+
+  .spacegame-command-bank {
+    gap: 0.5rem;
   }
 
   .spacegame-floating-actions-inner {
@@ -13447,7 +13973,7 @@ body::after {
 @media (max-width: 720px) {
   .terminal-room-cockpit-mode {
     min-height: 0;
-    padding: 0.95rem 0.85rem 1rem;
+    padding: 0.75rem 0.65rem 0.85rem;
   }
 
   .terminal-token-orbit,
@@ -13455,17 +13981,261 @@ body::after {
   .terminal-center-stack,
   .terminal-live-cpu,
   .terminal-virtual-keyboard {
+    border-radius: 18px;
+  }
+
+  .terminal-cockpit-scene {
+    gap: 0.6rem;
+  }
+
+  .terminal-live-hud {
+    gap: 0.55rem;
+    padding-inline: 0.05rem;
+  }
+
+  .terminal-live-hud-prompt {
+    gap: 0.24rem;
+  }
+
+  .terminal-live-hud-kicker,
+  .terminal-system-label {
+    font-size: 9px;
+  }
+
+  .terminal-live-example {
+    min-height: 32px;
+    padding: 0.4rem 0.6rem;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .terminal-live-hud-chips {
+    gap: 0.3rem;
+  }
+
+  .terminal-live-chip {
+    min-height: 24px;
+    padding: 0.26rem 0.46rem;
+    font-size: 8px;
+  }
+
+  .terminal-live-deck {
+    gap: 0.7rem;
+  }
+
+  .terminal-token-orbit,
+  .terminal-binary-stream,
+  .terminal-center-stack,
+  .terminal-live-cpu,
+  .terminal-virtual-keyboard,
+  .terminal-terminal-shell,
+  .terminal-output-console {
+    padding-left: 0.68rem;
+    padding-right: 0.68rem;
+  }
+
+  .terminal-center-stack {
+    gap: 0.6rem;
+  }
+
+  .terminal-token-orbit,
+  .terminal-binary-stream-left,
+  .terminal-binary-stream-right {
+    min-height: auto;
+    padding-top: 0.68rem;
+    padding-bottom: 0.72rem;
+  }
+
+  .terminal-token-cluster,
+  .terminal-binary-lane {
+    margin-top: 0.5rem;
+  }
+
+  .terminal-token-chip {
+    min-height: 28px;
+    padding: 0.3rem 0.55rem;
+    font-size: 10px;
+  }
+
+  .terminal-binary-cell {
+    min-height: 26px;
+    padding: 0.24rem 0.46rem;
+    border-radius: 10px;
+    font-size: 10px;
+  }
+
+  .terminal-terminal-shell {
+    gap: 0.45rem;
     border-radius: 20px;
   }
 
+  .terminal-terminal-topbar,
+  .terminal-terminal-footer,
+  .terminal-output-console-head {
+    font-size: 8px;
+  }
+
+  .terminal-terminal-core {
+    min-height: 220px;
+    border-radius: 16px;
+  }
+
+  .terminal-terminal-lock {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    min-height: 32px;
+    padding: 0.34rem 0.55rem;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+
   .terminal-terminal-input {
-    min-height: 240px;
+    min-height: 220px;
+    font-size: 13px;
+    line-height: 1.55;
+    padding: 3.3rem 0.75rem 0.8rem;
+  }
+
+  .terminal-terminal-cursor {
+    right: 0.7rem;
+    bottom: 0.7rem;
     font-size: 14px;
-    padding-top: 4.35rem;
+  }
+
+  .terminal-output-console-screen {
+    min-height: 66px;
+    border-radius: 14px;
+  }
+
+  .terminal-output-console-text {
+    padding: 0.6rem 0.7rem;
+    font-size: clamp(17px, 7vw, 24px);
+  }
+
+  .terminal-live-cpu {
+    min-height: 228px;
+    gap: 0.5rem;
+  }
+
+  .terminal-live-cpu-shell {
+    min-height: 154px;
+  }
+
+  .terminal-live-cpu-ring-outer {
+    width: 142px;
+    height: 142px;
+  }
+
+  .terminal-live-cpu-ring-mid {
+    width: 104px;
+    height: 104px;
+  }
+
+  .terminal-live-cpu-ring-inner {
+    width: 72px;
+    height: 72px;
+  }
+
+  .terminal-live-cpu-core {
+    width: 60px;
+    height: 60px;
+  }
+
+  .terminal-live-cpu-core span {
+    font-size: 13px;
+  }
+
+  .terminal-live-cpu-status {
+    font-size: 10px;
+  }
+
+  .terminal-virtual-keyboard {
+    gap: 0.28rem;
+    padding-top: 0.6rem;
+    padding-bottom: 0.68rem;
   }
 
   .terminal-keyboard-row {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.28rem;
+  }
+
+  .terminal-key {
+    min-height: 36px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .terminal-key-wide,
+  .terminal-key-xl {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 520px) {
+  .terminal-room-cockpit-mode {
+    padding: 0.62rem 0.52rem 0.72rem;
+  }
+
+  .terminal-live-example {
+    width: 100%;
+  }
+
+  .terminal-live-chip {
+    font-size: 7px;
+  }
+
+  .terminal-terminal-core,
+  .terminal-terminal-input {
+    min-height: 196px;
+  }
+
+  .terminal-terminal-input {
+    font-size: 12px;
+    padding-top: 3rem;
+  }
+
+  .terminal-terminal-lock {
+    min-height: 30px;
+    font-size: 10px;
+  }
+
+  .terminal-output-console-screen {
+    min-height: 58px;
+  }
+
+  .terminal-live-cpu {
+    min-height: 202px;
+  }
+
+  .terminal-live-cpu-ring-outer {
+    width: 124px;
+    height: 124px;
+  }
+
+  .terminal-live-cpu-ring-mid {
+    width: 92px;
+    height: 92px;
+  }
+
+  .terminal-live-cpu-ring-inner {
+    width: 62px;
+    height: 62px;
+  }
+
+  .terminal-live-cpu-core {
+    width: 52px;
+    height: 52px;
+  }
+
+  .terminal-keyboard-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .terminal-key {
+    min-height: 34px;
+    font-size: 11px;
   }
 
   .terminal-key-wide,
