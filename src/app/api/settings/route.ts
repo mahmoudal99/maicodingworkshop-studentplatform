@@ -45,40 +45,45 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Handle week unlocks
-  if (body.unlockedWeeks !== undefined) {
-    if (
-      !Array.isArray(body.unlockedWeeks) ||
-      !body.unlockedWeeks.every((w) => typeof w === "number" && w >= 1 && w <= 6)
-    ) {
-      return NextResponse.json({ error: "Invalid weeks array" }, { status: 400 });
+  try {
+    // Handle week unlocks
+    if (body.unlockedWeeks !== undefined) {
+      if (
+        !Array.isArray(body.unlockedWeeks) ||
+        !body.unlockedWeeks.every((w) => typeof w === "number" && w >= 1 && w <= 6)
+      ) {
+        return NextResponse.json({ error: "Invalid weeks array" }, { status: 400 });
+      }
+      const weeks = Array.from(new Set([1, ...body.unlockedWeeks])).sort();
+      await setUnlockedWeeks(weeks);
     }
-    const weeks = Array.from(new Set([1, ...body.unlockedWeeks])).sort();
-    await setUnlockedWeeks(weeks);
+
+    // Handle week links
+    if (body.weekLinks !== undefined) {
+      await setWeekLinks(body.weekLinks);
+    }
+
+    // Handle global resources
+    if (body.globalResources !== undefined) {
+      await setGlobalResources(body.globalResources);
+    }
+
+    // Handle resources unlock
+    if (body.resourcesUnlocked !== undefined) {
+      await setResourcesUnlocked(body.resourcesUnlocked);
+    }
+
+    // Return updated state
+    const [unlockedWeeks, weekLinks, globalResources, resourcesUnlocked] = await Promise.all([
+      getUnlockedWeeks(),
+      getWeekLinks(),
+      getGlobalResources(),
+      getResourcesUnlocked(),
+    ]);
+
+    return NextResponse.json({ success: true, unlockedWeeks, weekLinks, globalResources, resourcesUnlocked });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Settings save failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  // Handle week links
-  if (body.weekLinks !== undefined) {
-    await setWeekLinks(body.weekLinks);
-  }
-
-  // Handle global resources
-  if (body.globalResources !== undefined) {
-    await setGlobalResources(body.globalResources);
-  }
-
-  // Handle resources unlock
-  if (body.resourcesUnlocked !== undefined) {
-    await setResourcesUnlocked(body.resourcesUnlocked);
-  }
-
-  // Return updated state
-  const [unlockedWeeks, weekLinks, globalResources, resourcesUnlocked] = await Promise.all([
-    getUnlockedWeeks(),
-    getWeekLinks(),
-    getGlobalResources(),
-    getResourcesUnlocked(),
-  ]);
-
-  return NextResponse.json({ success: true, unlockedWeeks, weekLinks, globalResources, resourcesUnlocked });
 }

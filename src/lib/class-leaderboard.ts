@@ -31,7 +31,7 @@ function currentSeasonId(date = new Date()) {
 async function getBlobStore() {
   try {
     const { getStore } = await import("@netlify/blobs");
-    return getStore({ name: "workshop-leaderboard", consistency: "strong" });
+    return getStore("workshop-leaderboard");
   } catch {
     return null;
   }

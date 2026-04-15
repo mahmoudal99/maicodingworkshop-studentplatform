@@ -5611,21 +5611,52 @@ body::after {
   border-radius: 0;
 }
 
+.robotlab-bot-stage.fbx-asset-stage,
+.robotlab-bot-stage .fbx-asset-stage-canvas {
+  background: transparent;
+}
+
+.robotlab-bot-stage .fbx-asset-stage-overlay {
+  display: none;
+}
+
 .robotlab-status-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: 1rem;
   padding: 0.9rem 1rem;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(8, 12, 24, 0.72);
+  background: linear-gradient(180deg, rgba(10, 15, 28, 0.9), rgba(7, 11, 22, 0.84));
+}
+
+.robotlab-status-copy {
+  display: grid;
+  gap: 0.22rem;
 }
 
 .robotlab-status-text {
-  color: var(--fg);
-  font-size: 14px;
+  color: rgba(239, 245, 255, 0.94);
+  font-size: 15px;
   font-weight: 600;
+  line-height: 1.35;
+}
+
+.robotlab-status-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.robotlab-status-chip {
+  padding: 0.34rem 0.58rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--muted2);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 @keyframes robotlab-bot-bob {
@@ -5664,8 +5695,7 @@ body::after {
   }
 
   .robotlab-status-strip {
-    flex-direction: column;
-    align-items: flex-start;
+    gap: 0.75rem;
   }
 }
 
@@ -5678,6 +5708,7 @@ body::after {
   isolation: isolate;
   min-height: 540px;
   background: linear-gradient(180deg, rgba(7, 11, 23, 0.98), rgba(4, 8, 18, 0.99));
+  overflow: hidden;
 }
 
 .robotlab-room::before,
@@ -5748,7 +5779,7 @@ body::after {
   width: 132px;
   height: 132px;
   background-image: url("/Planets/p11.png");
-  opacity: 0.12;
+  opacity: 0.08;
 }
 
 .robotlab-space-planet-mid {
@@ -5757,7 +5788,7 @@ body::after {
   width: 92px;
   height: 92px;
   background-image: url("/Planets/p3.png");
-  opacity: 0.12;
+  opacity: 0.08;
 }
 
 .robotlab-space-planet-near {
@@ -5766,11 +5797,11 @@ body::after {
   width: 178px;
   height: 178px;
   background-image: url("/Planets/p7.png");
-  opacity: 0.24;
+  opacity: 0.16;
 }
 
 .robotlab-cockpit-frame {
-  z-index: 5;
+  display: none;
 }
 
 .robotlab-cockpit-trim {
@@ -5893,10 +5924,11 @@ body::after {
 }
 
 .robotlab-object-label {
-  padding: 0.22rem 0.5rem;
-  border-radius: 999px;
-  background: rgba(8, 13, 26, 0.8);
-  border: 1px solid rgba(255,255,255,0.08);
+  padding: 0;
+  border: none;
+  background: none;
+  color: rgba(234, 240, 255, 0.86);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
 }
 
 .robotlab-object-lamp {

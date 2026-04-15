@@ -807,8 +807,11 @@ export default function LiteralBotTestGame({ onComplete, accent }: Props) {
           ? "That script repaired the room."
           : "Change the script and try again.";
 
-  const feedbackLabel =
-    lastResult === "success" ? "Mission fixed" : lastResult === "error" ? "Needs adjustment" : phaseLabel;
+  const statusMeta = [
+    currentTarget ? `Target ${currentTarget.label}` : null,
+    carryingObject ? `Carrying ${carryingObject.label}` : null,
+    combo > 1 ? `${combo}x combo` : null,
+  ].filter(Boolean) as string[];
 
   return (
     <GameScene
@@ -834,22 +837,7 @@ export default function LiteralBotTestGame({ onComplete, accent }: Props) {
             <span className="robotlab-space-planet robotlab-space-planet-mid" />
             <span className="robotlab-space-planet robotlab-space-planet-near" />
           </div>
-          <div className="robotlab-cockpit-frame" aria-hidden="true">
-            <span className="robotlab-cockpit-trim robotlab-cockpit-trim-top" />
-            <span className="robotlab-cockpit-trim robotlab-cockpit-trim-bottom" />
-            <span className="robotlab-cockpit-trim robotlab-cockpit-trim-left" />
-            <span className="robotlab-cockpit-trim robotlab-cockpit-trim-right" />
-          </div>
           <div className="robotlab-room-grid" aria-hidden="true" />
-          <div className="robotlab-room-hud">
-            <div className="robotlab-room-goal">
-              <span>{mission.id === "binary-gate" ? "Binary target" : "Mission goal"}</span>
-              <strong>{mission.goalLabel}</strong>
-            </div>
-            <div className={`robotlab-result-pill${lastResult ? ` robotlab-result-pill-${lastResult}` : ""}`}>
-              {feedbackLabel}
-            </div>
-          </div>
 
           {mission.id === "binary-gate" && mission.targetPattern && currentPattern && (
             <div className="robotlab-gate-strip" aria-hidden="true">
@@ -943,31 +931,20 @@ export default function LiteralBotTestGame({ onComplete, accent }: Props) {
       </div>
 
         <div className="robotlab-command-bay">
-          <div className="robotlab-command-summary">
-            <div className="robotlab-summary-card robotlab-summary-card-status">
-              <span className="robotlab-summary-icon robotlab-summary-icon-status" aria-hidden="true" />
-              <span className="robotlab-kicker">Live feed</span>
-              <strong>{phaseMessage}</strong>
-              <p>{statusText}</p>
+          <div className="robotlab-status-strip">
+            <div className="robotlab-status-copy">
+              <span className="robotlab-kicker">{phaseMessage}</span>
+              <strong className="robotlab-status-text">{statusText}</strong>
             </div>
-
-            <div className="robotlab-summary-card">
-              <span className="robotlab-summary-icon robotlab-summary-icon-target" aria-hidden="true" />
-              <span className="robotlab-kicker">Target lock</span>
-              <strong>{currentTarget?.label || "None"}</strong>
-            </div>
-
-            <div className="robotlab-summary-card">
-              <span className="robotlab-summary-icon robotlab-summary-icon-carry" aria-hidden="true" />
-              <span className="robotlab-kicker">Carry</span>
-              <strong>{carryingObject?.label || "Empty hands"}</strong>
-            </div>
-
-            <div className="robotlab-summary-card">
-              <span className="robotlab-summary-icon robotlab-summary-icon-combo" aria-hidden="true" />
-              <span className="robotlab-kicker">Combo</span>
-              <strong>{combo}x</strong>
-            </div>
+            {statusMeta.length > 0 && (
+              <div className="robotlab-status-meta">
+                {statusMeta.map((item) => (
+                  <span key={item} className="robotlab-status-chip">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="robotlab-console-grid">

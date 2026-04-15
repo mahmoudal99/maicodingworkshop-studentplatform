@@ -29,7 +29,7 @@ interface Settings {
 async function getBlobStore() {
   try {
     const { getStore } = await import("@netlify/blobs");
-    return getStore({ name: "workshop-settings", consistency: "strong" });
+    return getStore("workshop-settings");
   } catch {
     return null;
   }
