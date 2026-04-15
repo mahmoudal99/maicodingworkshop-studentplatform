@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import GameScene from "@/components/game/GameScene";
+import { shuffleWithSeed } from "@/lib/game/randomize";
 import { useGameMeta } from "@/lib/game/use-game-meta";
 import { useParticles } from "@/lib/game/use-particles";
 import { useSound } from "@/lib/game/use-sound";
@@ -121,11 +122,25 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
 ];
 
+function buildQuizSet(userId: string) {
+  return shuffleWithSeed(QUIZ_QUESTIONS, `${userId}:week1-recap:questions`).map((question) => {
+    const options = shuffleWithSeed(question.options, `${userId}:week1-recap:${question.id}:options`);
+    const correctIndex = options.indexOf(question.options[question.correctIndex]);
+
+    return {
+      ...question,
+      options,
+      correctIndex,
+    };
+  });
+}
+
 export default function LaunchTheLabGame({ onComplete, accent }: Props) {
-  const { userName } = useUser();
+  const { userId, userName } = useUser();
   const { playTap, playCorrect, playWrong, playCombo, playComplete } = useSound();
   const { containerRef, burst } = useParticles();
-  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(QUIZ_QUESTIONS.length);
+  const [questions] = useState(() => buildQuizSet(userId));
+  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(questions.length);
   const comboRef = useRef(combo);
   const timersRef = useRef<number[]>([]);
 
@@ -138,10 +153,10 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
   const [lastResult, setLastResult] = useState<"correct" | "wrong" | null>(null);
   const [completedIds, setCompletedIds] = useState<string[]>([]);
 
-  const question = QUIZ_QUESTIONS[questionIndex];
-  const progressPercent = ((questionIndex + (phase === "complete" ? 1 : 0)) / QUIZ_QUESTIONS.length) * 100;
+  const question = questions[questionIndex];
+  const progressPercent = ((questionIndex + (phase === "complete" ? 1 : 0)) / questions.length) * 100;
   const playerName = userName || "Engineer";
-  const mastery = useMemo(() => Math.round((score / QUIZ_QUESTIONS.length) * 100), [score]);
+  const mastery = useMemo(() => Math.round((score / questions.length) * 100), [questions.length, score]);
 
   useEffect(() => {
     comboRef.current = combo;
@@ -176,7 +191,7 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
   function moveToNextQuestion() {
     clearTimers();
 
-    if (questionIndex === QUIZ_QUESTIONS.length - 1) {
+    if (questionIndex === questions.length - 1) {
       setPhase("complete");
       setStatusText(`Recap complete. ${playerName} rebooted the lab from memory.`);
       return;
@@ -188,7 +203,7 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
     setDisabledOptions([]);
     setLastResult(null);
     setPhase("playing");
-    setStatusText(QUIZ_QUESTIONS[nextIndex].clue);
+    setStatusText(questions[nextIndex].clue);
   }
 
   function handleOptionSelect(optionIndex: number) {
@@ -206,7 +221,7 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
       recordCorrect();
       playCorrect();
       if (comboRef.current + 1 > 1) playCombo(comboRef.current + 1);
-      if (questionIndex === QUIZ_QUESTIONS.length - 1) {
+      if (questionIndex === questions.length - 1) {
         playComplete();
       }
       celebrateQuestion();
@@ -233,7 +248,7 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
     <GameScene
       layout="birdseye"
       accent={accent}
-      header={{ room: "The Core", step: `Recap ${Math.min(questionIndex + 1, QUIZ_QUESTIONS.length)} of ${QUIZ_QUESTIONS.length}` }}
+      header={{ room: "The Core", step: `Recap ${Math.min(questionIndex + 1, questions.length)} of ${questions.length}` }}
       missionTitle="Launch the Lab"
       missionObjective="Answer the Week 1 recap cards and prove you remember how the machine works."
       subtitle="A fast Duolingo-style check on bits, bytes, CPU, RAM, storage, binary, flow, and precision."
@@ -242,13 +257,13 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
         <div className="recap-panel">
           <div className="recap-card">
             <span className="recap-kicker">Mission Score</span>
-            <strong>{score} / {QUIZ_QUESTIONS.length}</strong>
+            <strong>{score} / {questions.length}</strong>
             <p>{phase === "complete" ? "Week 1 recap fully cleared." : "Each correct card reboots another concept in the lab."}</p>
             <div className="recap-progress-row">
               <div className="recap-progress-bar" aria-hidden="true">
                 <span style={{ width: `${progressPercent}%`, background: accent }} />
               </div>
-              <span>{questionIndex + (phase === "complete" ? 1 : 0)} / {QUIZ_QUESTIONS.length} cards cleared</span>
+              <span>{questionIndex + (phase === "complete" ? 1 : 0)} / {questions.length} cards cleared</span>
             </div>
           </div>
 
@@ -258,7 +273,7 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
               <span>{mastery}% mastery</span>
             </div>
             <div className="recap-topic-list">
-              {QUIZ_QUESTIONS.map((item, index) => {
+              {questions.map((item, index) => {
                 const complete = completedIds.includes(item.id);
                 const active = phase !== "complete" && index === questionIndex;
 
@@ -331,7 +346,7 @@ export default function LaunchTheLabGame({ onComplete, accent }: Props) {
           <h3>{phase === "complete" ? `${playerName}, the lab is online.` : question.prompt}</h3>
           <p className="recap-question-copy">
             {phase === "complete"
-              ? `You cleared ${score} out of ${QUIZ_QUESTIONS.length} recap cards and rebooted the whole week.`
+              ? `You cleared ${score} out of ${questions.length} recap cards and rebooted the whole week.`
               : statusText}
           </p>
 

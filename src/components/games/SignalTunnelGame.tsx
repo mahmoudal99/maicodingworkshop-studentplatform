@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { shuffleWithSeed } from "@/lib/game/randomize";
+import { useUser } from "@/lib/store";
 
 interface Props {
   onComplete: () => void;
@@ -49,20 +51,12 @@ const SCENARIOS: TunnelScenario[] = [
   },
 ];
 
-function shuffle<T>(items: T[]) {
-  const next = [...items];
-  for (let i = next.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [next[i], next[j]] = [next[j], next[i]];
-  }
-  return next;
-}
-
 export default function SignalTunnelGame({ onComplete, accent }: Props) {
+  const { userId } = useUser();
   const [round, setRound] = useState(0);
   const [placed, setPlaced] = useState<TunnelStep[]>([]);
   const [choices, setChoices] = useState<TunnelStep[]>(() =>
-    shuffle(SCENARIOS[0].steps)
+    shuffleWithSeed(SCENARIOS[0].steps, `${userId}:signal-tunnel:${SCENARIOS[0].prompt}`)
   );
   const [feedback, setFeedback] = useState("Route the signal through the tunnel.");
   const [wrongId, setWrongId] = useState<string | null>(null);
@@ -96,12 +90,17 @@ export default function SignalTunnelGame({ onComplete, accent }: Props) {
           const nextRound = round + 1;
           setRound(nextRound);
           setPlaced([]);
-          setChoices(shuffle(SCENARIOS[nextRound].steps));
+          setChoices(
+            shuffleWithSeed(
+              SCENARIOS[nextRound].steps,
+              `${userId}:signal-tunnel:${SCENARIOS[nextRound].prompt}`
+            )
+          );
           setFeedback("Route the signal through the tunnel.");
         }, 900);
       }
     },
-    [placed, round, scenario.steps]
+    [placed, round, scenario.steps, userId]
   );
 
   if (done) {

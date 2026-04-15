@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import GameScene from "@/components/game/GameScene";
 import { useCompanion } from "@/lib/game/use-companion";
 import { useDrag } from "@/lib/game/use-drag";
+import { shuffleWithSeed } from "@/lib/game/randomize";
 import { useGameMeta } from "@/lib/game/use-game-meta";
 import { useParticles } from "@/lib/game/use-particles";
 import { useSound } from "@/lib/game/use-sound";
@@ -97,7 +98,7 @@ const BURST_POSITIONS: Record<SlotId, { x: number; y: number }> = {
 };
 
 export default function ComponentMatchGame({ onComplete, accent }: Props) {
-  const { userName } = useUser();
+  const { userId, userName } = useUser();
   const {
     character: byteCharacter,
     dialogue: byteDialogue,
@@ -115,6 +116,7 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
   const { playCorrect, playWrong, playCombo, playDrop, playComplete, playPulse } = useSound();
   const { containerRef, burst } = useParticles();
   const { stability, combo, recordCorrect, recordWrong } = useGameMeta(PARTS.length);
+  const [partOrder] = useState(() => shuffleWithSeed(PARTS, `${userId}:computer-builder:parts`));
 
   const [placedParts, setPlacedParts] = useState<Partial<Record<SlotId, PartSpec>>>({});
   const [statusText, setStatusText] = useState(
@@ -125,8 +127,8 @@ export default function ComponentMatchGame({ onComplete, accent }: Props) {
   const [phase, setPhase] = useState<"building" | "booting" | "complete">("building");
 
   const remainingParts = useMemo(
-    () => PARTS.filter((part) => !placedParts[part.id]),
-    [placedParts]
+    () => partOrder.filter((part) => !placedParts[part.id]),
+    [partOrder, placedParts]
   );
 
   useEffect(() => {

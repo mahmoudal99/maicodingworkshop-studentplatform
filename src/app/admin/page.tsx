@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useUser } from "@/lib/store";
 
 const WEEK_LABELS = [
   "Week 1 — How Computers Think",
@@ -25,9 +26,22 @@ interface GlobalResource {
   url: string;
 }
 
-type Tab = "weeks" | "week-links" | "global-resources";
+interface StudentEntry {
+  userId: string;
+  userName: string;
+  versionKey: "A" | "B";
+  totalXp: number;
+  weeklyXp: number;
+  streak: number;
+  completedCount: number;
+  currentWeek: number;
+  updatedAt: string;
+}
+
+type Tab = "weeks" | "week-links" | "global-resources" | "students";
 
 export default function AdminPage() {
+  const { userId } = useUser();
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [error, setError] = useState("");
@@ -39,26 +53,35 @@ export default function AdminPage() {
   const [feedback, setFeedback] = useState("");
   const [tab, setTab] = useState<Tab>("weeks");
   const [selectedWeek, setSelectedWeek] = useState(1);
+  const [students, setStudents] = useState<StudentEntry[]>([]);
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+
+  const loadAdminState = useCallback(async () => {
+    const [settingsData, leaderboardData] = await Promise.all([
+      fetch("/api/settings").then((r) => r.json()),
+      fetch("/api/leaderboard", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ entries: [] })),
+    ]);
+
+    if (Array.isArray(settingsData.unlockedWeeks)) {
+      setWeeks([1, 2, 3, 4, 5, 6].map((w) => settingsData.unlockedWeeks.includes(w)));
+    }
+    if (settingsData.weekLinks && typeof settingsData.weekLinks === "object") {
+      setWeekLinks(settingsData.weekLinks);
+    }
+    if (Array.isArray(settingsData.globalResources)) {
+      setGlobalResources(settingsData.globalResources);
+    }
+    if (typeof settingsData.resourcesUnlocked === "boolean") {
+      setResourcesUnlocked(settingsData.resourcesUnlocked);
+    }
+    if (Array.isArray(leaderboardData.entries)) {
+      setStudents(leaderboardData.entries);
+    }
+  }, []);
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data.unlockedWeeks)) {
-          setWeeks([1, 2, 3, 4, 5, 6].map((w) => data.unlockedWeeks.includes(w)));
-        }
-        if (data.weekLinks && typeof data.weekLinks === "object") {
-          setWeekLinks(data.weekLinks);
-        }
-        if (Array.isArray(data.globalResources)) {
-          setGlobalResources(data.globalResources);
-        }
-        if (typeof data.resourcesUnlocked === "boolean") {
-          setResourcesUnlocked(data.resourcesUnlocked);
-        }
-      })
-      .catch(() => {});
-  }, []);
+    loadAdminState().catch(() => {});
+  }, [loadAdminState]);
 
   const handleLogin = useCallback(async () => {
     setError("");
@@ -70,26 +93,14 @@ export default function AdminPage() {
       });
       if (res.ok) {
         setAuthed(true);
-        const data = await fetch("/api/settings").then((r) => r.json());
-        if (Array.isArray(data.unlockedWeeks)) {
-          setWeeks([1, 2, 3, 4, 5, 6].map((w) => data.unlockedWeeks.includes(w)));
-        }
-        if (data.weekLinks && typeof data.weekLinks === "object") {
-          setWeekLinks(data.weekLinks);
-        }
-        if (Array.isArray(data.globalResources)) {
-          setGlobalResources(data.globalResources);
-        }
-        if (typeof data.resourcesUnlocked === "boolean") {
-          setResourcesUnlocked(data.resourcesUnlocked);
-        }
+        await loadAdminState();
       } else {
         setError("Wrong password");
       }
     } catch {
       setError("Connection error");
     }
-  }, [password]);
+  }, [loadAdminState, password]);
 
   const saveAll = useCallback(async () => {
     setSaving(true);
@@ -182,6 +193,60 @@ export default function AdminPage() {
     });
   };
 
+  const handleDeleteStudent = useCallback(
+    async (student: StudentEntry) => {
+      const deletingCurrentUser = student.userId === userId;
+      const confirmed = window.confirm(
+        deletingCurrentUser
+          ? `Delete ${student.userName} and clear this browser's student profile?`
+          : `Delete ${student.userName} from the class leaderboard?`
+      );
+
+      if (!confirmed) return;
+
+      setRemovingUserId(student.userId);
+      setFeedback("");
+
+      try {
+        const res = await fetch("/api/leaderboard", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password, userId: student.userId }),
+        });
+
+        if (!res.ok) {
+          setFeedback("Delete failed");
+          return;
+        }
+
+        const data = await res.json();
+        if (Array.isArray(data.entries)) {
+          setStudents(data.entries);
+        } else {
+          setStudents((prev) => prev.filter((entry) => entry.userId !== student.userId));
+        }
+
+        setFeedback(deletingCurrentUser ? "Profile removed from this device." : "Student removed.");
+
+        if (deletingCurrentUser && typeof window !== "undefined") {
+          window.localStorage.removeItem("tlp-user");
+          window.localStorage.removeItem("tlp-progress");
+          window.localStorage.removeItem("tlp-streak-dates");
+          window.localStorage.removeItem("tlp-wireframe");
+          window.location.replace("/");
+          return;
+        }
+
+        window.setTimeout(() => setFeedback(""), 2200);
+      } catch {
+        setFeedback("Connection error");
+      } finally {
+        setRemovingUserId(null);
+      }
+    },
+    [password, userId]
+  );
+
   if (!authed) {
     return (
       <div className="admin-page">
@@ -216,6 +281,7 @@ export default function AdminPage() {
             ["weeks", "Week Unlocks"],
             ["week-links", "Week Links"],
             ["global-resources", "Global Resources"],
+            ["students", "Students"],
           ] as [Tab, string][]).map(([t, label]) => (
             <button
               key={t}
@@ -391,22 +457,69 @@ export default function AdminPage() {
           </>
         )}
 
+        {tab === "students" && (
+          <>
+            <p className="admin-sub">
+              Remove students from the shared class leaderboard. Deleting the current device profile also clears this browser's saved student data.
+            </p>
+
+            <div className="admin-student-list">
+              {students.length === 0 && <p className="admin-empty">No students on the leaderboard yet.</p>}
+              {students.map((student, index) => {
+                const isCurrentUser = student.userId === userId;
+
+                return (
+                  <div key={student.userId} className="admin-student-item">
+                    <div className="admin-student-rank">#{index + 1}</div>
+                    <div className="admin-student-copy">
+                      <strong>
+                        {student.userName}
+                        {isCurrentUser ? " (This device)" : ""}
+                      </strong>
+                      <span>
+                        {student.weeklyXp} XP this week · {student.streak} day streak · Week {student.currentWeek}
+                      </span>
+                    </div>
+                    <button
+                      className="admin-student-delete"
+                      onClick={() => handleDeleteStudent(student)}
+                      type="button"
+                      disabled={removingUserId === student.userId}
+                    >
+                      {removingUserId === student.userId ? "Removing..." : "Delete"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
         {/* Save bar */}
-        <div className="admin-actions">
-          <button
-            className="admin-save-btn"
-            onClick={saveAll}
-            disabled={saving}
-            type="button"
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
-          {feedback && (
-            <span className={`admin-feedback${feedback === "Saved!" ? " admin-feedback-ok" : ""}`}>
+        {tab !== "students" && (
+          <div className="admin-actions">
+            <button
+              className="admin-save-btn"
+              onClick={saveAll}
+              disabled={saving}
+              type="button"
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+            {feedback && (
+              <span className={`admin-feedback${feedback === "Saved!" ? " admin-feedback-ok" : ""}`}>
+                {feedback}
+              </span>
+            )}
+          </div>
+        )}
+        {tab === "students" && feedback && (
+          <div className="admin-actions">
+            <span className={`admin-feedback${feedback.includes("removed") ? " admin-feedback-ok" : ""}`}>
               {feedback}
             </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

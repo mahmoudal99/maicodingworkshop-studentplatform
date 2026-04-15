@@ -1,278 +1,476 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from "react";
 import GameScene from "@/components/game/GameScene";
-import { useCompanion } from "@/lib/game/use-companion";
+import FbxAssetStage from "@/components/game/FbxAssetStage";
 import { useGameMeta } from "@/lib/game/use-game-meta";
 import { useParticles } from "@/lib/game/use-particles";
 import { useSound } from "@/lib/game/use-sound";
-import { useUser } from "@/lib/store";
 
 interface Props {
   onComplete: () => void;
   accent: string;
 }
 
-interface Point {
+type Direction = "N" | "E" | "S" | "W";
+type ObjectKind = "lamp" | "switch" | "door" | "cube" | "pad";
+type CommandKind = "move" | "left" | "right" | "target" | "use" | "grab" | "drop";
+
+interface GridPoint {
   x: number;
   y: number;
 }
 
-interface BotChoice {
-  id: string;
-  label: string;
-  tag: string;
-  summary: string;
-  botTarget: Point;
-  burstPoint: Point;
-  effect: string;
-  success: boolean;
-  executionText: string;
-  resultText: string;
-  byteLine: string;
-  echoLine: string;
-  effectColor?: string;
+interface RobotState extends GridPoint {
+  dir: Direction;
 }
 
-interface BotMission {
+interface WorldObject extends GridPoint {
+  id: string;
+  kind: ObjectKind;
+  label: string;
+  color: string;
+  names: string[];
+  genericNames: string[];
+  on?: boolean;
+  open?: boolean;
+  placedOn?: string | null;
+}
+
+interface ParsedCommand {
+  kind: CommandKind;
+  value?: string;
+  raw: string;
+}
+
+interface RuntimeState {
+  robot: RobotState;
+  objects: WorldObject[];
+  targetId: string | null;
+  carryingId: string | null;
+}
+
+interface MissionConfig {
   id: string;
   title: string;
   objective: string;
   introLine: string;
   successLine: string;
-  botStart: Point;
-  choices: BotChoice[];
+  example: string;
+  commandChips: string[];
+  goalLabel: string;
+  grid: { cols: number; rows: number };
+  robotStart: RobotState;
+  objects: WorldObject[];
+  targetPattern?: boolean[];
 }
 
-const MISSIONS: BotMission[] = [
+const MISSIONS: MissionConfig[] = [
   {
     id: "lamp-bay",
-    title: "Lamp Calibration",
-    objective: "Tell the bot exactly which lamp to power so the blue beacon wakes up.",
-    introLine: "The bot listens literally. Pick the instruction that names the exact target.",
-    successLine: "Blue beacon online. Precision made the bot choose the right lamp.",
-    botStart: { x: 50, y: 78 },
-    choices: [
+    title: "Planet Targeting Run",
+    objective: "Move the drone into range, target the blue planet, and wake it up.",
+    introLine: "Build instructions, then run them. Vague targeting wakes the wrong planet.",
+    successLine: "Blue planet online. Precision routing fixed the bay.",
+    example: "move\nmove\nright\nmove\nmove\ntarget blue planet\nuse",
+    commandChips: ["move", "left", "right", "target planet", "target blue planet", "use"],
+    goalLabel: "Wake the blue planet.",
+    grid: { cols: 6, rows: 5 },
+    robotStart: { x: 1, y: 4, dir: "N" },
+    objects: [
       {
-        id: "turn-it-on",
-        label: "Turn it on",
-        tag: "Too Vague",
-        summary: "The bot powers the closest thing it can turn on.",
-        botTarget: { x: 28, y: 38 },
-        burstPoint: { x: 28, y: 32 },
-        effect: "green-lamp",
-        success: false,
-        executionText: "The bot heads for the nearest lamp and powers it up.",
-        resultText: "The green lamp turned on. 'It' was vague, so the bot chose the wrong target.",
-        byteLine: "That worked for a lamp, just not the lamp we wanted.",
-        echoLine: "Computers do exactly what you say, not what you meant.",
-        effectColor: "#22c55e",
+        id: "amber-lamp",
+        kind: "lamp",
+        label: "Amber Planet",
+        color: "#f59e0b",
+        x: 1,
+        y: 2,
+        names: ["amber planet", "amber lamp"],
+        genericNames: ["planet", "lamp"],
       },
       {
-        id: "turn-blue-lamp-on",
-        label: "Turn on the blue lamp",
-        tag: "Precise",
-        summary: "The target is named, so the bot can act exactly.",
-        botTarget: { x: 74, y: 38 },
-        burstPoint: { x: 74, y: 32 },
-        effect: "blue-lamp",
-        success: true,
-        executionText: "The bot locks onto the blue lamp and flips the switch.",
-        resultText: "The blue beacon lit up right away because the instruction named the exact lamp.",
-        byteLine: "Perfect. The bot knew exactly where to go.",
-        echoLine: "Precise instructions create precise results.",
-        effectColor: "#38bdf8",
-      },
-      {
-        id: "make-room-bright",
-        label: "Make the room bright",
-        tag: "Different Goal",
-        summary: "The bot increases light another way by opening the window shades.",
-        botTarget: { x: 50, y: 20 },
-        burstPoint: { x: 50, y: 18 },
-        effect: "window-open",
-        success: false,
-        executionText: "The bot opens the overhead shades to brighten the room.",
-        resultText: "The room got brighter, but the blue lamp stayed off. The command changed the wrong thing.",
-        byteLine: "Bright room, wrong repair.",
-        echoLine: "A broad goal can still produce the wrong action.",
-        effectColor: "#f59e0b",
+        id: "blue-lamp",
+        kind: "lamp",
+        label: "Blue Planet",
+        color: "#38bdf8",
+        x: 4,
+        y: 2,
+        names: ["blue planet", "blue lamp"],
+        genericNames: ["planet", "lamp"],
       },
     ],
   },
   {
-    id: "battery-bay",
-    title: "Battery Sorting",
-    objective: "Make the bot charge the left battery, not just any battery in the room.",
-    introLine: "There are two batteries here. Precision matters when objects are similar.",
-    successLine: "Left battery charging. The bot followed the exact location in the instruction.",
-    botStart: { x: 50, y: 78 },
-    choices: [
+    id: "binary-gate",
+    title: "Binary Gate Repair",
+    objective: "Toggle the switch lights until the gate reads ON OFF ON.",
+    introLine: "Binary lives in switches. Set the real lights, then the door will answer.",
+    successLine: "Gate unlocked. The switch pattern matched the ship signal.",
+    example: "move\ntarget left switch\nuse\ntarget middle switch\nuse\ntarget right switch\nuse",
+    commandChips: [
+      "move",
+      "left",
+      "right",
+      "target switch",
+      "target left switch",
+      "target middle switch",
+      "target right switch",
+      "use",
+    ],
+    goalLabel: "Match the gate lights to ON OFF ON.",
+    targetPattern: [true, false, true],
+    grid: { cols: 6, rows: 5 },
+    robotStart: { x: 2, y: 3, dir: "N" },
+    objects: [
       {
-        id: "charge-battery",
-        label: "Charge the battery",
-        tag: "Too Vague",
-        summary: "The bot grabs the closest battery instead of the left one.",
-        botTarget: { x: 52, y: 34 },
-        burstPoint: { x: 52, y: 24 },
-        effect: "charge-right",
-        success: false,
-        executionText: "The bot rolls a battery to the charger without checking which side you meant.",
-        resultText: "The right battery went to the charger. The command never said left.",
-        byteLine: "The bot picked a battery, just not the right one.",
-        echoLine: "When choices look alike, your instruction has to narrow the target.",
-        effectColor: "#fb7185",
+        id: "left-switch",
+        kind: "switch",
+        label: "Left Switch",
+        color: "#46d9ff",
+        x: 1,
+        y: 2,
+        names: ["left switch"],
+        genericNames: ["switch"],
+        on: false,
       },
       {
-        id: "charge-left-battery",
-        label: "Charge the battery on the left",
-        tag: "Precise",
-        summary: "The left battery is named by position, so the bot chooses correctly.",
-        botTarget: { x: 52, y: 34 },
-        burstPoint: { x: 48, y: 24 },
-        effect: "charge-left",
-        success: true,
-        executionText: "The bot identifies the left battery and docks it in the charger.",
-        resultText: "The left battery is charging because the instruction described exactly which one to pick.",
-        byteLine: "Locked in. Left battery only.",
-        echoLine: "Specific details like side, color, or position remove ambiguity.",
-        effectColor: "#22c55e",
+        id: "middle-switch",
+        kind: "switch",
+        label: "Middle Switch",
+        color: "#46d9ff",
+        x: 2,
+        y: 2,
+        names: ["middle switch", "center switch"],
+        genericNames: ["switch"],
+        on: true,
       },
       {
-        id: "fix-power",
-        label: "Fix the power",
-        tag: "Different Goal",
-        summary: "The bot checks cables because the command sounds like a diagnosis job.",
-        botTarget: { x: 50, y: 72 },
-        burstPoint: { x: 50, y: 70 },
-        effect: "check-cables",
-        success: false,
-        executionText: "The bot scans the cable terminal and starts a diagnostics routine.",
-        resultText: "The bot inspected the cables instead of charging a battery. The goal was too broad.",
-        byteLine: "It followed the repair vibe, not the battery task.",
-        echoLine: "A vague goal can send a computer into a totally different routine.",
-        effectColor: "#f59e0b",
+        id: "right-switch",
+        kind: "switch",
+        label: "Right Switch",
+        color: "#46d9ff",
+        x: 3,
+        y: 2,
+        names: ["right switch"],
+        genericNames: ["switch"],
+        on: false,
+      },
+      {
+        id: "binary-door",
+        kind: "door",
+        label: "Gate Door",
+        color: "#3be67f",
+        x: 4,
+        y: 1,
+        names: ["door", "gate"],
+        genericNames: ["door", "gate"],
+        open: false,
       },
     ],
   },
   {
     id: "cargo-bay",
-    title: "Cargo Placement",
-    objective: "Get the cube onto the red pad, not just moved somewhere else.",
-    introLine: "Final test. The bot will move the cube, but only exact wording lands it on the target pad.",
-    successLine: "Cargo aligned. The cube landed on the red pad because the destination was explicit.",
-    botStart: { x: 24, y: 78 },
-    choices: [
+    title: "Cargo Precision Drop",
+    objective: "Grab the cube and place it on the red pad, not just any pad.",
+    introLine: "Exact object, exact destination. If the target is vague, the cargo lands wrong.",
+    successLine: "Cargo aligned. The drone followed the full instruction path.",
+    example: "move\nmove\ntarget cube\ngrab\nright\nmove\nmove\nmove\ntarget red pad\ndrop",
+    commandChips: [
+      "move",
+      "left",
+      "right",
+      "target cube",
+      "grab",
+      "target pad",
+      "target red pad",
+      "target blue pad",
+      "drop",
+    ],
+    goalLabel: "Place the cube on the red pad.",
+    grid: { cols: 6, rows: 5 },
+    robotStart: { x: 1, y: 4, dir: "N" },
+    objects: [
       {
-        id: "move-cube",
-        label: "Move the cube",
-        tag: "Too Vague",
-        summary: "The bot moves it, but stops at the center of the room.",
-        botTarget: { x: 50, y: 58 },
-        burstPoint: { x: 50, y: 58 },
-        effect: "cube-center",
-        success: false,
-        executionText: "The bot lifts the cube and leaves it in the middle of the bay.",
-        resultText: "The cube moved, but not onto the red pad. The destination was missing.",
-        byteLine: "Move happened. Target missed.",
-        echoLine: "Action alone is not enough. Good instructions also name the destination.",
-        effectColor: "#f97316",
+        id: "cargo-cube",
+        kind: "cube",
+        label: "Cargo Cube",
+        color: "#f8fafc",
+        x: 1,
+        y: 2,
+        names: ["cube", "cargo cube"],
+        genericNames: ["cube", "cargo"],
       },
       {
-        id: "cube-red-pad",
-        label: "Put the cube on the red pad",
-        tag: "Precise",
-        summary: "The bot gets both the object and the destination exactly right.",
-        botTarget: { x: 74, y: 42 },
-        burstPoint: { x: 74, y: 42 },
-        effect: "cube-red",
-        success: true,
-        executionText: "The bot carries the cube across the bay and places it on the red pad.",
-        resultText: "The cube snapped onto the red pad because the instruction named both what to move and where to place it.",
-        byteLine: "Nailed it. Exact object, exact destination.",
-        echoLine: "Precise code describes the action and the target clearly.",
-        effectColor: "#ef4444",
+        id: "blue-pad",
+        kind: "pad",
+        label: "Blue Pad",
+        color: "#38bdf8",
+        x: 2,
+        y: 1,
+        names: ["blue pad"],
+        genericNames: ["pad"],
       },
       {
-        id: "tidy-up",
-        label: "Tidy up",
-        tag: "Different Goal",
-        summary: "The bot stores the cube away because that is its idea of tidy.",
-        botTarget: { x: 76, y: 74 },
-        burstPoint: { x: 76, y: 74 },
-        effect: "cube-bin",
-        success: false,
-        executionText: "The bot drops the cube into the storage bin to clean the floor.",
-        resultText: "The cube is packed away, not on the red pad. 'Tidy up' told the bot to clean, not place.",
-        byteLine: "Very tidy. Very wrong.",
-        echoLine: "Computers do not guess your hidden goal. They follow the instruction literally.",
-        effectColor: "#a78bfa",
+        id: "red-pad",
+        kind: "pad",
+        label: "Red Pad",
+        color: "#fb7185",
+        x: 4,
+        y: 1,
+        names: ["red pad"],
+        genericNames: ["pad"],
       },
     ],
   },
 ];
 
-function getBatteryPosition(effect: string | null, batteryId: "left" | "right"): Point {
-  if (effect === "charge-left" && batteryId === "left") return { x: 47, y: 28 };
-  if (effect === "charge-right" && batteryId === "right") return { x: 53, y: 28 };
-  return batteryId === "left" ? { x: 26, y: 50 } : { x: 74, y: 50 };
+const MISSION_SHIP_ASSETS: Record<string, string> = {
+  "lamp-bay": "/Assets/Kingfisher.fbx",
+  "binary-gate": "/Assets/Icarus.fbx",
+  "cargo-bay": "/Assets/Stormspike.fbx",
+};
+
+const OBJECT_PLANET_SKINS: Record<string, string> = {
+  "amber-lamp": "/Planets/p12.png",
+  "blue-lamp": "/Planets/p11.png",
+  "left-switch": "/Planets/p3.png",
+  "middle-switch": "/Planets/p8.png",
+  "right-switch": "/Planets/p5.png",
+  "cargo-cube": "/Planets/p3.png",
+  "blue-pad": "/Planets/p11.png",
+  "red-pad": "/Planets/p7.png",
+};
+
+function cloneObjects(objects: WorldObject[]) {
+  return objects.map((object) => ({ ...object }));
 }
 
-function getCubePosition(effect: string | null): Point {
-  if (effect === "cube-center") return { x: 50, y: 58 };
-  if (effect === "cube-red") return { x: 74, y: 42 };
-  if (effect === "cube-bin") return { x: 76, y: 74 };
-  return { x: 28, y: 64 };
+function createRuntime(mission: MissionConfig): RuntimeState {
+  return {
+    robot: { ...mission.robotStart },
+    objects: cloneObjects(mission.objects),
+    targetId: null,
+    carryingId: null,
+  };
+}
+
+function cloneRuntime(runtime: RuntimeState): RuntimeState {
+  return {
+    robot: { ...runtime.robot },
+    objects: cloneObjects(runtime.objects),
+    targetId: runtime.targetId,
+    carryingId: runtime.carryingId,
+  };
+}
+
+function normalizeText(input: string) {
+  return input.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function rotateLeft(dir: Direction): Direction {
+  if (dir === "N") return "W";
+  if (dir === "W") return "S";
+  if (dir === "S") return "E";
+  return "N";
+}
+
+function rotateRight(dir: Direction): Direction {
+  if (dir === "N") return "E";
+  if (dir === "E") return "S";
+  if (dir === "S") return "W";
+  return "N";
+}
+
+function moveForward(robot: RobotState): RobotState {
+  if (robot.dir === "N") return { ...robot, y: robot.y - 1 };
+  if (robot.dir === "E") return { ...robot, x: robot.x + 1 };
+  if (robot.dir === "S") return { ...robot, y: robot.y + 1 };
+  return { ...robot, x: robot.x - 1 };
+}
+
+function distance(a: GridPoint, b: GridPoint) {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+}
+
+function isInRange(robot: RobotState, object: WorldObject) {
+  return distance(robot, object) <= 1;
+}
+
+function parseProgram(code: string) {
+  const commands: ParsedCommand[] = [];
+  const lines = code.split("\n");
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const raw = lines[index].trim();
+    if (!raw || raw.startsWith("//")) continue;
+
+    const normalized = normalizeText(raw);
+
+    if (normalized === "move" || normalized === "forward") {
+      commands.push({ kind: "move", raw });
+      continue;
+    }
+
+    if (normalized === "left" || normalized === "turn left") {
+      commands.push({ kind: "left", raw });
+      continue;
+    }
+
+    if (normalized === "right" || normalized === "turn right") {
+      commands.push({ kind: "right", raw });
+      continue;
+    }
+
+    if (normalized.startsWith("target ")) {
+      commands.push({ kind: "target", value: normalized.slice(7).trim(), raw });
+      continue;
+    }
+
+    if (normalized === "use" || normalized === "activate" || normalized === "toggle") {
+      commands.push({ kind: "use", raw });
+      continue;
+    }
+
+    if (normalized === "grab" || normalized === "pickup" || normalized === "pick up") {
+      commands.push({ kind: "grab", raw });
+      continue;
+    }
+
+    if (normalized === "drop" || normalized === "place") {
+      commands.push({ kind: "drop", raw });
+      continue;
+    }
+
+    return {
+      commands,
+      error: `Line ${index + 1} is unreadable. Try commands like move, target blue planet, use, grab, or drop.`,
+    };
+  }
+
+  if (commands.length === 0) {
+    return { commands, error: "The command deck is empty. Build a few instructions first." };
+  }
+
+  return { commands, error: null };
+}
+
+function resolveTarget(runtime: RuntimeState, query: string) {
+  const normalized = normalizeText(query);
+  const exact = runtime.objects.find((object) =>
+    object.names.some((name) => normalizeText(name) === normalized)
+  );
+
+  if (exact) return exact;
+
+  const genericMatches = runtime.objects.filter((object) =>
+    object.genericNames.some((name) => normalizeText(name) === normalized)
+  );
+
+  if (genericMatches.length === 0) return null;
+
+  return [...genericMatches].sort((left, right) => {
+    const distanceDiff = distance(runtime.robot, left) - distance(runtime.robot, right);
+    if (distanceDiff !== 0) return distanceDiff;
+    return left.x - right.x;
+  })[0];
+}
+
+function getObject(runtime: RuntimeState, objectId: string | null) {
+  if (!objectId) return null;
+  return runtime.objects.find((object) => object.id === objectId) ?? null;
+}
+
+function getCurrentPattern(runtime: RuntimeState) {
+  return runtime.objects
+    .filter((object) => object.kind === "switch")
+    .sort((left, right) => left.x - right.x)
+    .map((object) => Boolean(object.on));
+}
+
+function matchesPattern(pattern: boolean[], target: boolean[]) {
+  return pattern.length === target.length && pattern.every((value, index) => value === target[index]);
+}
+
+function isMissionSolved(mission: MissionConfig, runtime: RuntimeState) {
+  if (mission.id === "lamp-bay") {
+    return Boolean(getObject(runtime, "blue-lamp")?.on);
+  }
+
+  if (mission.id === "binary-gate") {
+    return Boolean(getObject(runtime, "binary-door")?.open);
+  }
+
+  if (mission.id === "cargo-bay") {
+    return getObject(runtime, "cargo-cube")?.placedOn === "red-pad";
+  }
+
+  return false;
+}
+
+function getObjectPositionStyle(object: WorldObject, mission: MissionConfig, runtime: RuntimeState) {
+  const cols = mission.grid.cols;
+  const rows = mission.grid.rows;
+  let x = object.x;
+  let y = object.y;
+
+  if (object.id === runtime.carryingId) {
+    x = runtime.robot.x;
+    y = runtime.robot.y;
+  }
+
+  return {
+    left: `${((x + 0.5) / cols) * 100}%`,
+    top: `${((y + 0.5) / rows) * 100}%`,
+  };
+}
+
+function getRobotStyle(mission: MissionConfig, robot: RobotState): CSSProperties {
+  return {
+    left: `${((robot.x + 0.5) / mission.grid.cols) * 100}%`,
+    top: `${((robot.y + 0.5) / mission.grid.rows) * 100}%`,
+    "--robot-rotation": `${robot.dir === "N" ? 0 : robot.dir === "E" ? 90 : robot.dir === "S" ? 180 : -90}deg`,
+  } as CSSProperties;
+}
+
+function formatChipLabel(snippet: string) {
+  return snippet.toUpperCase();
+}
+
+function getObjectPlanet(object: WorldObject) {
+  return OBJECT_PLANET_SKINS[object.id] ?? "/Planets/p8.png";
 }
 
 export default function LiteralBotTestGame({ onComplete, accent }: Props) {
-  const { userName } = useUser();
-  const {
-    character: byteCharacter,
-    dialogue: byteDialogue,
-    mood: byteMood,
-    say: byteSay,
-    celebrate: byteCelebrate,
-    alert: byteAlert,
-  } = useCompanion("byte");
-  const {
-    character: echoCharacter,
-    dialogue: echoDialogue,
-    mood: echoMood,
-    say: echoSay,
-  } = useCompanion("echo");
+  const missionCount = MISSIONS.length;
   const { playTap, playCorrect, playWrong, playCombo, playComplete, playPulse } = useSound();
   const { containerRef, burst } = useParticles();
-  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(MISSIONS.length);
+  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(missionCount);
   const comboRef = useRef(combo);
   const timersRef = useRef<number[]>([]);
+  const dragSnippetRef = useRef<string | null>(null);
 
   const [round, setRound] = useState(0);
-  const [phase, setPhase] = useState<"choose" | "executing" | "transition" | "complete">(
-    "choose"
-  );
+  const [program, setProgram] = useState("");
+  const [runtime, setRuntime] = useState<RuntimeState>(() => createRuntime(MISSIONS[0]));
+  const [phase, setPhase] = useState<"editing" | "running" | "transition" | "complete">("editing");
+  const [activeLine, setActiveLine] = useState<number | null>(null);
   const [statusText, setStatusText] = useState(MISSIONS[0].introLine);
-  const [activeChoiceId, setActiveChoiceId] = useState<string | null>(null);
-  const [wrongChoiceId, setWrongChoiceId] = useState<string | null>(null);
-  const [sceneEffect, setSceneEffect] = useState<string | null>(null);
-  const [botPosition, setBotPosition] = useState<Point>(MISSIONS[0].botStart);
+  const [runningCommands, setRunningCommands] = useState<ParsedCommand[]>([]);
+  const [lastResult, setLastResult] = useState<"success" | "error" | null>(null);
 
   const mission = MISSIONS[round];
-  const activeChoice = mission.choices.find((choice) => choice.id === activeChoiceId) ?? null;
-  const repairedRooms = Math.min(
-    MISSIONS.length,
-    round + (activeChoice?.success && (phase === "transition" || phase === "complete") ? 1 : 0)
-  );
+  const shipAsset = MISSION_SHIP_ASSETS[mission.id] ?? "/Assets/Kingfisher.fbx";
+  const currentTarget = getObject(runtime, runtime.targetId);
+  const carryingObject = getObject(runtime, runtime.carryingId);
+  const currentPattern = mission.id === "binary-gate" ? getCurrentPattern(runtime) : null;
+  const displayLines =
+    phase === "running"
+      ? runningCommands.map((command) => command.raw)
+      : program.split("\n").filter((line) => line.trim().length > 0);
 
   useEffect(() => {
     comboRef.current = combo;
   }, [combo]);
-
-  useEffect(() => {
-    const player = userName || "Engineer";
-    byteSay(`${player}, give the bot exact instructions and watch what happens.`, 3000);
-    echoSay("Precise code removes ambiguity.", 2200);
-  }, [byteSay, echoSay, round, userName]);
 
   useEffect(() => {
     return () => {
@@ -281,214 +479,305 @@ export default function LiteralBotTestGame({ onComplete, accent }: Props) {
     };
   }, []);
 
+  useEffect(() => {
+    setProgram("");
+    setRuntime(createRuntime(mission));
+    setPhase("editing");
+    setActiveLine(null);
+    setStatusText(mission.introLine);
+    setRunningCommands([]);
+    setLastResult(null);
+  }, [mission]);
+
   function clearTimers() {
     timersRef.current.forEach((timer) => window.clearTimeout(timer));
     timersRef.current = [];
   }
 
-  function burstAt(point: Point, color?: string) {
+  function resetMissionView(nextStatus = mission.introLine) {
+    setRuntime(createRuntime(mission));
+    setPhase("editing");
+    setActiveLine(null);
+    setRunningCommands([]);
+    setStatusText(nextStatus);
+    setLastResult(null);
+  }
+
+  function burstAtPoint(point: GridPoint, color = accent) {
     const container = containerRef.current;
     if (!container) return;
 
     burst({
-      x: container.clientWidth * (point.x / 100),
-      y: container.clientHeight * (point.y / 100),
-      color: color || accent,
-      count: 20,
-      spread: 96,
+      x: container.clientWidth * ((point.x + 0.5) / mission.grid.cols),
+      y: container.clientHeight * ((point.y + 0.5) / mission.grid.rows),
+      color,
+      count: 16,
+      spread: 92,
       size: 7,
     });
   }
 
-  function loadMission(nextRound: number) {
-    const nextMission = MISSIONS[nextRound];
-    setRound(nextRound);
-    setPhase("choose");
-    setStatusText(nextMission.introLine);
-    setActiveChoiceId(null);
-    setWrongChoiceId(null);
-    setSceneEffect(null);
-    setBotPosition(nextMission.botStart);
+  function appendSnippet(snippet: string) {
+    if (phase !== "editing") return;
+    setProgram((current) => (current.trim().length ? `${current.trimEnd()}\n${snippet}` : snippet));
+    setStatusText(`Added "${snippet}". Run it or keep building.`);
+    playTap();
   }
 
-  function handleChoice(choice: BotChoice) {
-    if (phase !== "choose") return;
+  function handleDropSnippet(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const snippet = event.dataTransfer.getData("text/plain") || dragSnippetRef.current;
+    dragSnippetRef.current = null;
+    if (snippet) appendSnippet(snippet);
+  }
+
+  function handleClearProgram() {
+    if (phase !== "editing") return;
+    setProgram("");
+    setStatusText("Command deck cleared. Build a fresh instruction path.");
+  }
+
+  function handleResetRoom() {
+    if (phase === "running") return;
+    resetMissionView("Room reset. Build a new instruction path.");
+    playPulse();
+  }
+
+  function finishFailure(summary: string) {
+    recordWrong();
+    playWrong();
+    setLastResult("error");
+    setStatusText(summary);
+    setPhase("transition");
+
+    const resetTimer = window.setTimeout(() => {
+      resetMissionView("Adjust the instructions and run the drone again.");
+    }, 1600);
+
+    timersRef.current.push(resetTimer);
+  }
+
+  function finishSuccess() {
+    recordCorrect();
+    playCorrect();
+    if (comboRef.current + 1 > 1) playCombo(comboRef.current + 1);
+    playComplete();
+    setLastResult("success");
+    setStatusText(mission.successLine);
+    setPhase("transition");
+
+    if (mission.id === "lamp-bay") {
+      burstAtPoint({ x: 4, y: 2 }, "#38bdf8");
+    } else if (mission.id === "binary-gate") {
+      burstAtPoint({ x: 4, y: 1 }, "#3be67f");
+    } else {
+      burstAtPoint({ x: 4, y: 1 }, "#fb7185");
+    }
+
+    const nextTimer = window.setTimeout(() => {
+      if (round === missionCount - 1) {
+        setPhase("complete");
+        setStatusText("Command bay restored. Every instruction path now runs cleanly.");
+        setActiveLine(null);
+        return;
+      }
+
+      setRound((current) => current + 1);
+    }, 1650);
+
+    timersRef.current.push(nextTimer);
+  }
+
+  function executeProgram() {
+    if (phase !== "editing") return;
+
+    const parsed = parseProgram(program);
+    if (parsed.error) {
+      setStatusText(parsed.error);
+      playWrong();
+      setLastResult("error");
+      return;
+    }
 
     clearTimers();
-    setPhase("executing");
-    setActiveChoiceId(choice.id);
-    setWrongChoiceId(null);
-    setSceneEffect(null);
-    setStatusText(`Literal Bot executing: ${choice.label}`);
-    setBotPosition(choice.botTarget);
-    playTap();
+    const initialRuntime = createRuntime(mission);
+    setRuntime(initialRuntime);
+    setRunningCommands(parsed.commands);
+    setPhase("running");
+    setActiveLine(0);
+    setStatusText("Drone online. Executing the command deck...");
+    setLastResult(null);
     playPulse();
-    byteSay(choice.byteLine, 2200);
-    echoSay("The bot is following the instruction exactly as written.", 2200);
 
-    timersRef.current.push(
-      window.setTimeout(() => {
-        setSceneEffect(choice.effect);
-        setStatusText(choice.executionText);
-        playPulse();
-      }, 620)
-    );
+    let working = cloneRuntime(initialRuntime);
 
-    timersRef.current.push(
-      window.setTimeout(() => {
-        setStatusText(choice.resultText);
-
-        if (choice.success) {
-          recordCorrect();
-          playCorrect();
-          if (comboRef.current + 1 > 1) playCombo(comboRef.current + 1);
-          playComplete();
-          byteCelebrate(choice.byteLine);
-          echoSay(choice.echoLine, 2400);
-          burstAt(choice.burstPoint, choice.effectColor);
-
-          if (round === MISSIONS.length - 1) {
-            setPhase("complete");
-            setActiveChoiceId(choice.id);
-            setStatusText(
-              "Literal Bot calibrated. Precise instructions now repair every target in the bay."
-            );
-            return;
-          }
-
-          setPhase("transition");
-          timersRef.current.push(
-            window.setTimeout(() => {
-              loadMission(round + 1);
-            }, 1500)
-          );
-          return;
+    const executeStep = (index: number) => {
+      if (index >= parsed.commands.length) {
+        if (isMissionSolved(mission, working)) {
+          finishSuccess();
+        } else {
+          finishFailure("The drone followed the program, but the room is still not repaired.");
         }
+        return;
+      }
 
-        recordWrong();
-        playWrong();
-        setPhase("transition");
-        setWrongChoiceId(choice.id);
-        byteAlert(choice.byteLine);
-        echoSay(choice.echoLine, 2400);
+      const command = parsed.commands[index];
+      setActiveLine(index);
 
-        timersRef.current.push(
-          window.setTimeout(() => {
-            setPhase("choose");
-            setActiveChoiceId(null);
-            setWrongChoiceId(null);
-            setSceneEffect(null);
-            setBotPosition(mission.botStart);
-            setStatusText("Try again with a more exact instruction.");
-          }, 1450)
-        );
-      }, 1320)
-    );
-  }
+      if (command.kind === "move") {
+        const nextRobot = moveForward(working.robot);
+        const insideBounds =
+          nextRobot.x >= 0 &&
+          nextRobot.y >= 0 &&
+          nextRobot.x < mission.grid.cols &&
+          nextRobot.y < mission.grid.rows;
 
-  function renderMissionScene() {
-    if (mission.id === "lamp-bay") {
-      return (
-        <>
-          <div
-            className={`precision-window${sceneEffect === "window-open" ? " precision-window-open" : ""}`}
-            style={{ left: "50%", top: "20%" }}
-          >
-            <span className="precision-window-glow" />
-            <span className="precision-window-slats" />
-          </div>
+        if (insideBounds) {
+          working.robot = nextRobot;
+          setStatusText("Drone moved one tile forward.");
+        } else {
+          setStatusText("Bonk. The drone hit the cockpit wall and stayed put.");
+          playWrong();
+        }
+      }
 
-          <div
-            className={`precision-lamp precision-lamp-green${sceneEffect === "green-lamp" ? " precision-lamp-on" : ""}`}
-            style={{ left: "28%", top: "32%" }}
-          >
-            <span className="precision-lamp-bulb" />
-            <span className="precision-lamp-label">Green Lamp</span>
-          </div>
+      if (command.kind === "left") {
+        working.robot = { ...working.robot, dir: rotateLeft(working.robot.dir) };
+        setStatusText("Drone turned left.");
+      }
 
-          <div
-            className={`precision-lamp precision-lamp-blue${sceneEffect === "blue-lamp" ? " precision-lamp-on" : ""}`}
-            style={{ left: "74%", top: "32%" }}
-          >
-            <span className="precision-lamp-bulb" />
-            <span className="precision-lamp-label">Blue Lamp</span>
-          </div>
-        </>
-      );
-    }
+      if (command.kind === "right") {
+        working.robot = { ...working.robot, dir: rotateRight(working.robot.dir) };
+        setStatusText("Drone turned right.");
+      }
 
-    if (mission.id === "battery-bay") {
-      const leftBatteryPosition = getBatteryPosition(sceneEffect, "left");
-      const rightBatteryPosition = getBatteryPosition(sceneEffect, "right");
+      if (command.kind === "target") {
+        const resolved = resolveTarget(working, command.value || "");
+        if (resolved) {
+          working.targetId = resolved.id;
+          setStatusText(
+            resolved.names.some((name) => normalizeText(name) === normalizeText(command.value || ""))
+              ? `Target locked: ${resolved.label}.`
+              : `Target was vague, so the drone locked onto the nearest ${resolved.genericNames[0]}.`
+          );
+        } else {
+          working.targetId = null;
+          setStatusText(`No system answered to "${command.value}".`);
+          playWrong();
+        }
+      }
 
-      return (
-        <>
-          <div className="precision-charger" style={{ left: "50%", top: "24%" }}>
-            <span className={`precision-charger-core${sceneEffect?.startsWith("charge-") ? " precision-charger-core-on" : ""}`} />
-            <span className="precision-charger-label">Charger</span>
-          </div>
+      if (command.kind === "use") {
+        const target =
+          getObject(working, working.targetId) ??
+          [...working.objects]
+            .filter((object) => object.kind === "lamp" || object.kind === "switch")
+            .sort((left, right) => distance(working.robot, left) - distance(working.robot, right))[0] ??
+          null;
 
-          <div
-            className={`precision-battery precision-battery-left${
-              sceneEffect === "charge-left" ? " precision-battery-charging" : ""
-            }`}
-            style={{ left: `${leftBatteryPosition.x}%`, top: `${leftBatteryPosition.y}%` }}
-          >
-            <span className="precision-battery-cap" />
-            <span className="precision-battery-label">Left</span>
-          </div>
+        if (!target) {
+          setStatusText("The drone had nothing to use.");
+        } else if (!isInRange(working.robot, target)) {
+          setStatusText(`${target.label} is out of reach. The drone coasted too far away.`);
+          playWrong();
+        } else if (target.kind === "lamp") {
+          target.on = true;
+          setStatusText(
+            target.id === "blue-lamp"
+              ? "Blue planet activated."
+              : `${target.label} woke up instead. The command hit the wrong target.`
+          );
+          burstAtPoint(target, target.color);
+          playPulse();
+        } else if (target.kind === "switch") {
+          target.on = !target.on;
+          const door = getObject(working, "binary-door");
+          const nextPattern = getCurrentPattern(working);
+          if (door && mission.targetPattern) {
+            door.open = matchesPattern(nextPattern, mission.targetPattern);
+          }
+          setStatusText(
+            `${target.label} toggled ${target.on ? "on" : "off"}.` +
+              (door?.open ? " The gate answered immediately." : "")
+          );
+          burstAtPoint(target, target.on ? "#46d9ff" : "#94a3b8");
+          playPulse();
+        } else {
+          setStatusText(`The drone tagged ${target.label}, but nothing useful happened.`);
+        }
+      }
 
-          <div
-            className={`precision-battery precision-battery-right${
-              sceneEffect === "charge-right" ? " precision-battery-charging" : ""
-            }`}
-            style={{ left: `${rightBatteryPosition.x}%`, top: `${rightBatteryPosition.y}%` }}
-          >
-            <span className="precision-battery-cap" />
-            <span className="precision-battery-label">Right</span>
-          </div>
+      if (command.kind === "grab") {
+        const target =
+          getObject(working, working.targetId) ??
+          working.objects.find((object) => object.kind === "cube") ??
+          null;
 
-          <div
-            className={`precision-cable-terminal${
-              sceneEffect === "check-cables" ? " precision-cable-terminal-live" : ""
-            }`}
-            style={{ left: "50%", top: "72%" }}
-          >
-            <span className="precision-cable-node" />
-            <span className="precision-cable-node" />
-            <span className="precision-cable-node" />
-            <span className="precision-cable-label">Cable Hub</span>
-          </div>
-        </>
-      );
-    }
+        if (working.carryingId) {
+          setStatusText("The drone is already carrying something.");
+          playWrong();
+        } else if (!target || target.kind !== "cube") {
+          setStatusText("There is no cargo selected to grab.");
+          playWrong();
+        } else if (!isInRange(working.robot, target)) {
+          setStatusText("The cube is too far away to grab.");
+          playWrong();
+        } else {
+          working.carryingId = target.id;
+          target.placedOn = null;
+          setStatusText("Cargo cube picked up.");
+          burstAtPoint(target, "#f8fafc");
+          playPulse();
+        }
+      }
 
-    const cubePosition = getCubePosition(sceneEffect);
-    return (
-      <>
-        <div className="precision-pad precision-pad-red" style={{ left: "74%", top: "42%" }}>
-          <span className="precision-pad-label">Red Pad</span>
-        </div>
+      if (command.kind === "drop") {
+        const cargo = getObject(working, working.carryingId);
+        const target =
+          getObject(working, working.targetId) ??
+          [...working.objects]
+            .filter((object) => object.kind === "pad")
+            .sort((left, right) => distance(working.robot, left) - distance(working.robot, right))[0] ??
+          null;
 
-        <div className="precision-pad precision-pad-center" style={{ left: "50%", top: "58%" }}>
-          <span className="precision-pad-label">Center</span>
-        </div>
+        if (!cargo) {
+          setStatusText("The drone opened its grip, but there was nothing to drop.");
+          playWrong();
+        } else if (target && target.kind === "pad" && isInRange(working.robot, target)) {
+          cargo.x = target.x;
+          cargo.y = target.y;
+          cargo.placedOn = target.id;
+          working.carryingId = null;
+          setStatusText(
+            target.id === "red-pad"
+              ? "Cargo placed on the red pad."
+              : `Cargo landed on ${target.label} instead of the mission target.`
+          );
+          burstAtPoint(target, target.color);
+          playPulse();
+        } else {
+          cargo.x = working.robot.x;
+          cargo.y = working.robot.y;
+          cargo.placedOn = null;
+          working.carryingId = null;
+          setStatusText("The drone dropped the cargo at its feet.");
+          playWrong();
+        }
+      }
 
-        <div className={`precision-bin${sceneEffect === "cube-bin" ? " precision-bin-open" : ""}`} style={{ left: "76%", top: "74%" }}>
-          <span className="precision-bin-lid" />
-          <span className="precision-bin-label">Storage Bin</span>
-        </div>
+      setRuntime(cloneRuntime(working));
 
-        <div
-          className={`precision-cube${
-            sceneEffect === "cube-red" ? " precision-cube-targeted" : ""
-          }`}
-          style={{ left: `${cubePosition.x}%`, top: `${cubePosition.y}%` }}
-        >
-          <span className="precision-cube-face" />
-        </div>
-      </>
-    );
+      if (isMissionSolved(mission, working)) {
+        finishSuccess();
+        return;
+      }
+
+      const nextTimer = window.setTimeout(() => executeStep(index + 1), 640);
+      timersRef.current.push(nextTimer);
+    };
+
+    const startTimer = window.setTimeout(() => executeStep(0), 260);
+    timersRef.current.push(startTimer);
   }
 
   const footer =
@@ -498,124 +787,299 @@ export default function LiteralBotTestGame({ onComplete, accent }: Props) {
       </button>
     ) : null;
 
+  const phaseLabel =
+    phase === "editing"
+      ? "Build script"
+      : phase === "running"
+        ? "Executing"
+        : phase === "complete"
+          ? "Bay clear"
+          : lastResult === "success"
+            ? "Fixed"
+            : "Adjust";
+
+  const phaseMessage =
+    phase === "editing"
+      ? "Write the steps, then press Run."
+      : phase === "running"
+        ? `Running ${activeLine !== null ? activeLine + 1 : 1} of ${Math.max(runningCommands.length, 1)}.`
+        : lastResult === "success"
+          ? "That script repaired the room."
+          : "Change the script and try again.";
+
+  const feedbackLabel =
+    lastResult === "success" ? "Mission fixed" : lastResult === "error" ? "Needs adjustment" : phaseLabel;
+
   return (
     <GameScene
       layout="birdseye"
       accent={accent}
-      header={{ room: "Precision Bot Bay", step: `Test ${round + 1} of ${MISSIONS.length}` }}
-      missionTitle="Precision Bot"
+      header={{ room: "Command Bay", step: `Mission ${round + 1} of ${missionCount}` }}
+      missionTitle={mission.title}
       missionObjective={mission.objective}
-      subtitle="Choose an instruction, then watch the bot follow it literally."
-      companions={[
-        {
-          character: byteCharacter,
-          dialogue: byteDialogue,
-          mood: byteMood,
-        },
-        {
-          character: echoCharacter,
-          dialogue: echoDialogue,
-          mood: echoMood,
-        },
-      ]}
       stability={{ stability, combo }}
-      controls={
-        <div className="precision-panel">
-          <div className="precision-card precision-mission-card">
-            <span className="precision-kicker">Mission Brief</span>
-            <strong>{mission.title}</strong>
-            <p>{mission.objective}</p>
-            <div className="precision-progress-row">
-              <div className="precision-progress-bar" aria-hidden="true">
-                <span
-                  style={{
-                    width: `${(repairedRooms / MISSIONS.length) * 100}%`,
-                    background: accent,
-                  }}
-                />
-              </div>
-              <span>{repairedRooms}/{MISSIONS.length} rooms repaired</span>
-            </div>
-          </div>
-
-          <div className="precision-card precision-choice-card">
-            <span className="precision-kicker">Instruction Deck</span>
-            <div className="precision-choice-list">
-              {mission.choices.map((choice) => {
-                const active = activeChoiceId === choice.id;
-                const wrong = wrongChoiceId === choice.id;
-                return (
-                  <button
-                    key={choice.id}
-                    className={`precision-choice${active ? " precision-choice-active" : ""}${
-                      wrong ? " precision-choice-wrong" : ""
-                    }`}
-                    onClick={() => handleChoice(choice)}
-                    type="button"
-                    disabled={phase !== "choose"}
-                  >
-                    <span className="precision-choice-top">
-                      <strong>{choice.label}</strong>
-                      <span
-                        className={`precision-choice-tag${
-                          choice.success
-                            ? " precision-choice-tag-precise"
-                            : choice.tag === "Too Vague"
-                            ? " precision-choice-tag-vague"
-                            : " precision-choice-tag-side"
-                        }`}
-                      >
-                        {choice.tag}
-                      </span>
-                    </span>
-                    <small>{choice.summary}</small>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="precision-card precision-rule-card">
-            <span className="precision-kicker">Literal Rule</span>
-            <strong>Good code names the target clearly.</strong>
-            <p>
-              Vague instructions create funny failures because the bot follows the words exactly.
-              Precise instructions tell it what to act on and where to act.
-            </p>
-            <div className="precision-rule-pills">
-              <span className="precision-rule-pill precision-rule-pill-good">Object</span>
-              <span className="precision-rule-pill precision-rule-pill-good">Destination</span>
-              <span className="precision-rule-pill">No Guessing</span>
-            </div>
-          </div>
-        </div>
-      }
       footer={footer}
     >
-      <div ref={containerRef} className="precision-room">
-        <div className="precision-room-grid" aria-hidden="true" />
-        <div className="precision-room-badge">
-          <span>Literal Thinking</span>
-          <strong>{mission.title}</strong>
-        </div>
-
-        {renderMissionScene()}
-
+      <div className="robotlab-layout">
         <div
-          className={`precision-bot${phase === "executing" ? " precision-bot-walking" : ""}`}
-          style={
-            {
-              left: `${botPosition.x}%`,
-              top: `${botPosition.y}%`,
-              "--bot-accent": accent,
-            } as CSSProperties
-          }
+          ref={containerRef}
+          className={`robotlab-room${lastResult === "success" ? " robotlab-room-success" : ""}${
+            lastResult === "error" ? " robotlab-room-error" : ""
+          }`}
+          style={{ "--game-accent": accent } as CSSProperties}
         >
-          <span className="precision-bot-shadow" />
-          <span className="precision-bot-body">
-            <span className="precision-bot-face">◉_◉</span>
+          <div className="robotlab-room-space" aria-hidden="true">
+            <span className="robotlab-space-stars" />
+            <span className="robotlab-space-planet robotlab-space-planet-far" />
+            <span className="robotlab-space-planet robotlab-space-planet-mid" />
+            <span className="robotlab-space-planet robotlab-space-planet-near" />
+          </div>
+          <div className="robotlab-cockpit-frame" aria-hidden="true">
+            <span className="robotlab-cockpit-trim robotlab-cockpit-trim-top" />
+            <span className="robotlab-cockpit-trim robotlab-cockpit-trim-bottom" />
+            <span className="robotlab-cockpit-trim robotlab-cockpit-trim-left" />
+            <span className="robotlab-cockpit-trim robotlab-cockpit-trim-right" />
+          </div>
+          <div className="robotlab-room-grid" aria-hidden="true" />
+          <div className="robotlab-room-hud">
+            <div className="robotlab-room-goal">
+              <span>{mission.id === "binary-gate" ? "Binary target" : "Mission goal"}</span>
+              <strong>{mission.goalLabel}</strong>
+            </div>
+            <div className={`robotlab-result-pill${lastResult ? ` robotlab-result-pill-${lastResult}` : ""}`}>
+              {feedbackLabel}
+            </div>
+          </div>
+
+          {mission.id === "binary-gate" && mission.targetPattern && currentPattern && (
+            <div className="robotlab-gate-strip" aria-hidden="true">
+              <div className="robotlab-gate-strip-row">
+                <span className="robotlab-gate-strip-label">Target</span>
+                {mission.targetPattern.map((bit, index) => (
+                  <span
+                    key={`door-target-${index}`}
+                    className={`robotlab-gate-bulb${bit ? " robotlab-gate-bulb-on" : ""}`}
+                  />
+                ))}
+              </div>
+              <div className="robotlab-gate-strip-row robotlab-gate-strip-row-live">
+                <span className="robotlab-gate-strip-label">Live</span>
+                {currentPattern.map((bit, index) => (
+                  <span
+                    key={`door-live-${index}`}
+                    className={`robotlab-gate-bulb${bit ? " robotlab-gate-bulb-on" : ""}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {runtime.objects.map((object) => (
+            <div
+              key={object.id}
+              className={`robotlab-object robotlab-object-${object.kind}${
+                object.on ? " robotlab-object-on" : ""
+              }${object.open ? " robotlab-object-open" : ""}${
+                object.placedOn === "red-pad" ? " robotlab-object-correct" : ""
+              }${object.id === runtime.carryingId ? " robotlab-object-carrying" : ""}`}
+              style={getObjectPositionStyle(object, mission, runtime)}
+            >
+              {object.kind === "lamp" && (
+                <>
+                  <img className="robotlab-planet-art robotlab-planet-art-lamp" src={getObjectPlanet(object)} alt="" aria-hidden="true" />
+                  <span className="robotlab-object-label">{object.label}</span>
+                </>
+              )}
+
+              {object.kind === "switch" && (
+                <>
+                  <img className="robotlab-planet-art robotlab-planet-art-switch" src={getObjectPlanet(object)} alt="" aria-hidden="true" />
+                  <span className="robotlab-object-label">{object.label}</span>
+                </>
+              )}
+
+              {object.kind === "door" && (
+                <>
+                  <span className="robotlab-door-shell" />
+                  <span className="robotlab-door-panel" />
+                  <span className="robotlab-object-label">{object.open ? "Gate Open" : "Gate Closed"}</span>
+                </>
+              )}
+
+              {object.kind === "cube" && (
+                <>
+                  <img className="robotlab-planet-art robotlab-planet-art-cargo" src={getObjectPlanet(object)} alt="" aria-hidden="true" />
+                  <span className="robotlab-object-label">Cargo</span>
+                </>
+              )}
+
+              {object.kind === "pad" && (
+                <>
+                  <img className="robotlab-planet-art robotlab-planet-art-pad" src={getObjectPlanet(object)} alt="" aria-hidden="true" />
+                  <span className="robotlab-object-label">{object.label}</span>
+                </>
+              )}
+            </div>
+          ))}
+
+          <div
+          className={`robotlab-bot${phase === "running" ? " robotlab-bot-running" : ""}`}
+          style={getRobotStyle(mission, runtime.robot)}
+        >
+          <span className="robotlab-bot-shell">
+            <FbxAssetStage
+              modelPath={shipAsset}
+              accent={accent}
+              title="Command rocket"
+              variant="board"
+              zoom={1.18}
+              autoRotate={false}
+              float={false}
+              modelRotation={[0, Math.PI / 2, 0]}
+              className="robotlab-bot-stage"
+            />
           </span>
-          <span className="precision-bot-label">Literal Bot</span>
+        </div>
+      </div>
+
+        <div className="robotlab-command-bay">
+          <div className="robotlab-command-summary">
+            <div className="robotlab-summary-card robotlab-summary-card-status">
+              <span className="robotlab-summary-icon robotlab-summary-icon-status" aria-hidden="true" />
+              <span className="robotlab-kicker">Live feed</span>
+              <strong>{phaseMessage}</strong>
+              <p>{statusText}</p>
+            </div>
+
+            <div className="robotlab-summary-card">
+              <span className="robotlab-summary-icon robotlab-summary-icon-target" aria-hidden="true" />
+              <span className="robotlab-kicker">Target lock</span>
+              <strong>{currentTarget?.label || "None"}</strong>
+            </div>
+
+            <div className="robotlab-summary-card">
+              <span className="robotlab-summary-icon robotlab-summary-icon-carry" aria-hidden="true" />
+              <span className="robotlab-kicker">Carry</span>
+              <strong>{carryingObject?.label || "Empty hands"}</strong>
+            </div>
+
+            <div className="robotlab-summary-card">
+              <span className="robotlab-summary-icon robotlab-summary-icon-combo" aria-hidden="true" />
+              <span className="robotlab-kicker">Combo</span>
+              <strong>{combo}x</strong>
+            </div>
+          </div>
+
+          <div className="robotlab-console-grid">
+            <div className="robotlab-card robotlab-card-program">
+              <div className="robotlab-card-head">
+                <span className="robotlab-kicker">Program</span>
+                <span className={`robotlab-phase robotlab-phase-${phase}`}>{phaseLabel}</span>
+              </div>
+
+              <div
+                className={`robotlab-editor-shell${phase !== "editing" ? " robotlab-editor-shell-run" : ""}`}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={handleDropSnippet}
+              >
+                {phase === "editing" ? (
+                  <textarea
+                    className="robotlab-editor"
+                    value={program}
+                    onChange={(event) => setProgram(event.target.value)}
+                    placeholder={mission.example}
+                    spellCheck={false}
+                  />
+                ) : (
+                  <div className="robotlab-runview">
+                    {displayLines.map((line, index) => (
+                      <div
+                        key={`${mission.id}-${index}-${line}`}
+                        className={`robotlab-runline${activeLine === index ? " robotlab-runline-active" : ""}`}
+                      >
+                        <span className="robotlab-runline-index">{index + 1}</span>
+                        <span>{line}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="robotlab-editor-actions">
+                <button className="robotlab-run-btn" onClick={executeProgram} disabled={phase !== "editing"} type="button">
+                  Run
+                </button>
+                <button className="robotlab-secondary-btn" onClick={handleResetRoom} disabled={phase === "running"} type="button">
+                  Reset
+                </button>
+                <button className="robotlab-secondary-btn" onClick={handleClearProgram} disabled={phase !== "editing"} type="button">
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <div className="robotlab-console-side">
+              <div className="robotlab-card">
+                <div className="robotlab-card-head">
+                  <span className="robotlab-kicker">Command bank</span>
+                  <span className="robotlab-chip-hint">Click or drag into the program</span>
+                </div>
+                <div className="robotlab-chip-bank">
+                  {mission.commandChips.map((snippet) => (
+                    <button
+                      key={`${mission.id}-${snippet}`}
+                      className="robotlab-chip"
+                      type="button"
+                      disabled={phase !== "editing"}
+                      draggable={phase === "editing"}
+                      onClick={() => appendSnippet(snippet)}
+                      onDragStart={(event) => {
+                        dragSnippetRef.current = snippet;
+                        event.dataTransfer.setData("text/plain", snippet);
+                      }}
+                    >
+                      {formatChipLabel(snippet)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {mission.targetPattern && currentPattern && (
+                <div className="robotlab-card robotlab-card-pattern">
+                  <div className="robotlab-card-head">
+                    <span className="robotlab-kicker">Gate lights</span>
+                    <span className={`robotlab-result-pill${lastResult ? ` robotlab-result-pill-${lastResult}` : ""}`}>
+                      {matchesPattern(currentPattern, mission.targetPattern) ? "Matched" : "Live"}
+                    </span>
+                  </div>
+                  <div className="robotlab-pattern-card">
+                    <div className="robotlab-pattern-row">
+                      <span>Target</span>
+                      <div className="robotlab-pattern-lights">
+                        {mission.targetPattern.map((bit, index) => (
+                          <span
+                            key={`target-${mission.id}-${index}`}
+                            className={`robotlab-pattern-light${bit ? " robotlab-pattern-light-on" : ""}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="robotlab-pattern-row">
+                      <span>Live</span>
+                      <div className="robotlab-pattern-lights">
+                        {currentPattern.map((bit, index) => (
+                          <span
+                            key={`current-${mission.id}-${index}`}
+                            className={`robotlab-pattern-light${bit ? " robotlab-pattern-light-on" : ""}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </GameScene>

@@ -3,9 +3,11 @@
 import { type CSSProperties, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import GameScene from "@/components/game/GameScene";
+import { pickWithSeed } from "@/lib/game/randomize";
 import { useGameMeta } from "@/lib/game/use-game-meta";
 import { useParticles } from "@/lib/game/use-particles";
 import { useSound } from "@/lib/game/use-sound";
+import { useUser } from "@/lib/store";
 
 interface Props {
   onComplete: () => void;
@@ -120,6 +122,138 @@ const ADVANCED_MISSIONS: TerminalMission[] = [
     successLine: "Dock lights online.",
     example: 'print("GO" + " GO")',
   },
+];
+
+const CORE_MISSION_POOLS: TerminalMission[][] = [
+  [
+    CORE_MISSIONS[0],
+    {
+      id: "nav-strip",
+      title: "Wake the nav strip",
+      objective: "Type code that prints READY into the nav strip.",
+      targetOutput: "READY",
+      introLine: "Type code to send READY through the nav strip.",
+      successLine: "Nav strip online.",
+      example: 'Try print("READY")',
+    },
+    {
+      id: "thruster-boost",
+      title: "Prime the thrusters",
+      objective: "Type code that prints BOOST into the thruster panel.",
+      targetOutput: "BOOST",
+      introLine: "Type code to send BOOST into the thruster panel.",
+      successLine: "Thruster panel online.",
+      example: 'Try print("BOOST")',
+    },
+  ],
+  [
+    CORE_MISSIONS[1],
+    {
+      id: "fuel-meter",
+      title: "Fix the fuel meter",
+      objective: "Type code that makes the fuel meter display 7.",
+      targetOutput: "7",
+      introLine: "Type code that lands on the value 7.",
+      successLine: "Fuel meter repaired.",
+      example: "Try fuel = 3 + 4 then print(fuel)",
+    },
+    {
+      id: "shield-meter",
+      title: "Charge the shield meter",
+      objective: "Type code that makes the shield meter display 9.",
+      targetOutput: "9",
+      introLine: "Type code that lands on the value 9.",
+      successLine: "Shield meter repaired.",
+      example: "Try shield = 4 + 5 then print(shield)",
+    },
+  ],
+  [
+    CORE_MISSIONS[2],
+    {
+      id: "airlock-sign",
+      title: "Restore the airlock sign",
+      objective: "Type code that sends OPEN to the airlock sign.",
+      targetOutput: "OPEN",
+      introLine: "Type code that prints OPEN to the airlock sign.",
+      successLine: "Airlock sign online.",
+      example: 'Try print("OPEN")',
+    },
+    {
+      id: "run-banner",
+      title: "Wake the run banner",
+      objective: "Type code that sends RUN to the run banner.",
+      targetOutput: "RUN",
+      introLine: "Type code that prints RUN to the run banner.",
+      successLine: "Run banner online.",
+      example: 'Try print("RUN")',
+    },
+  ],
+];
+
+const ADVANCED_MISSION_POOLS: TerminalMission[][] = [
+  [
+    ADVANCED_MISSIONS[0],
+    {
+      id: "go-banner",
+      title: "Restore the go banner",
+      objective: "Type code that prints GO NOW into the banner.",
+      targetOutput: "GO NOW",
+      introLine: "Build one string that prints GO NOW.",
+      successLine: "Go banner online.",
+      example: 'print("GO" + " NOW")',
+    },
+    {
+      id: "crew-banner",
+      title: "Restore the crew banner",
+      objective: "Type code that prints CREW OK into the banner.",
+      targetOutput: "CREW OK",
+      introLine: "Build one string that prints CREW OK.",
+      successLine: "Crew banner online.",
+      example: 'print("CREW" + " OK")',
+    },
+  ],
+  [
+    ADVANCED_MISSIONS[1],
+    {
+      id: "power-cache",
+      title: "Patch the power cache",
+      objective: "Store 8, then print it into the power monitor.",
+      targetOutput: "8",
+      introLine: "Use memory first, then print the saved value.",
+      successLine: "Power monitor repaired.",
+      example: "power = 5 + 3 then print(power)",
+    },
+    {
+      id: "count-cache",
+      title: "Patch the count cache",
+      objective: "Store 9, then print it into the count monitor.",
+      targetOutput: "9",
+      introLine: "Use memory first, then print the saved value.",
+      successLine: "Count monitor repaired.",
+      example: "count = 6 + 3 then print(count)",
+    },
+  ],
+  [
+    ADVANCED_MISSIONS[2],
+    {
+      id: "lift-greenlight",
+      title: "Open the lift lights",
+      objective: "Type code that sends UP UP to the lift lights.",
+      targetOutput: "UP UP",
+      introLine: "Combine two strings and print the final lift phrase.",
+      successLine: "Lift lights online.",
+      example: 'print("UP" + " UP")',
+    },
+    {
+      id: "bay-greenlight",
+      title: "Open the bay lights",
+      objective: "Type code that sends ON ON to the bay lights.",
+      targetOutput: "ON ON",
+      introLine: "Combine two strings and print the final bay phrase.",
+      successLine: "Bay lights online.",
+      example: 'print("ON" + " ON")',
+    },
+  ],
 ];
 
 const TOKEN_COLORS: Record<TokenKind, string> = {
@@ -491,12 +625,20 @@ function analyzeCode(code: string, targetOutput: string): Analysis {
 
 export default function CodeExecutionChainGame({ onComplete, accent }: Props) {
   const params = useParams<{ lessonIndex?: string }>();
+  const { userId } = useUser();
   const { playTap, playCorrect, playWrong, playCombo, playComplete, playPulse } = useSound();
   const { containerRef, burst } = useParticles();
   const lessonIndex = Number(params.lessonIndex ?? 0);
+  const missionPools = useMemo(
+    () => (lessonIndex >= 4 ? ADVANCED_MISSION_POOLS : CORE_MISSION_POOLS),
+    [lessonIndex]
+  );
   const missions = useMemo(
-    () => (lessonIndex >= 4 ? ADVANCED_MISSIONS : CORE_MISSIONS),
-    [lessonIndex],
+    () =>
+      missionPools.map((pool, index) =>
+        pickWithSeed(pool, `${userId}:code-terminal:${lessonIndex}:${index}`)
+      ),
+    [lessonIndex, missionPools, userId]
   );
   const { stability, combo, recordCorrect, recordWrong } = useGameMeta(missions.length);
   const comboRef = useRef(combo);

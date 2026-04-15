@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { pickWithSeed } from "@/lib/game/randomize";
+import { useUser } from "@/lib/store";
 
 interface Props {
   onComplete: () => void;
@@ -23,22 +25,23 @@ interface CapsuleChallenge {
 
 const BIT_WEIGHTS = [128, 64, 32, 16, 8, 4, 2, 1];
 
-const CHALLENGES: CapsuleChallenge[] = [
+const CHARGE_CHALLENGE: CapsuleChallenge = {
+  id: "shell-byte",
+  icon: "8",
+  label: "Byte shell",
+  objective: "Charge every slot to forge one full byte shell.",
+  modeLabel: "Charge all 8",
+  targetLabel: "Full byte shell",
+  statusHint: "First forge: every bit must be on. A byte is 8 live bits together.",
+  successLine: "Shell sealed. Next forge: match an exact byte pattern.",
+  targetBits: new Array(8).fill(true),
+  initialBits: new Array(8).fill(false),
+  lockedBits: new Array(8).fill(false),
+};
+
+const BADGE_CHALLENGE_OPTIONS: CapsuleChallenge[] = [
   {
-    id: "shell-byte",
-    icon: "8",
-    label: "Byte shell",
-    objective: "Charge every slot to forge one full byte shell.",
-    modeLabel: "Charge all 8",
-    targetLabel: "Full byte shell",
-    statusHint: "First forge: every bit must be on. A byte is 8 live bits together.",
-    successLine: "Shell sealed. Next forge: match an exact byte pattern.",
-    targetBits: new Array(8).fill(true),
-    initialBits: new Array(8).fill(false),
-    lockedBits: new Array(8).fill(false),
-  },
-  {
-    id: "badge-byte",
+    id: "badge-a",
     icon: "A",
     label: "Badge capsule",
     objective: "Match the byte pattern that encodes the badge letter A.",
@@ -51,6 +54,35 @@ const CHALLENGES: CapsuleChallenge[] = [
     lockedBits: new Array(8).fill(false),
   },
   {
+    id: "badge-c",
+    icon: "C",
+    label: "Badge capsule",
+    objective: "Match the byte pattern that encodes the badge letter C.",
+    modeLabel: "Match pattern",
+    targetLabel: "Letter C",
+    statusHint: "Now precision matters. Match the byte exactly to seal the badge capsule.",
+    successLine: "Badge encoded. Final forge: repair a damaged byte with locked bits.",
+    targetBits: [false, true, false, false, false, false, true, true],
+    initialBits: new Array(8).fill(false),
+    lockedBits: new Array(8).fill(false),
+  },
+  {
+    id: "badge-p",
+    icon: "P",
+    label: "Badge capsule",
+    objective: "Match the byte pattern that encodes the badge letter P.",
+    modeLabel: "Match pattern",
+    targetLabel: "Letter P",
+    statusHint: "Now precision matters. Match the byte exactly to seal the badge capsule.",
+    successLine: "Badge encoded. Final forge: repair a damaged byte with locked bits.",
+    targetBits: [false, true, false, true, false, false, false, false],
+    initialBits: new Array(8).fill(false),
+    lockedBits: new Array(8).fill(false),
+  },
+];
+
+const REPAIR_CHALLENGE_OPTIONS: CapsuleChallenge[] = [
+  {
     id: "tool-repair",
     icon: "⚙",
     label: "Tool capsule",
@@ -62,6 +94,32 @@ const CHALLENGES: CapsuleChallenge[] = [
     targetBits: [true, false, true, true, false, true, false, false],
     initialBits: [true, true, false, true, true, false, false, false],
     lockedBits: [true, false, false, true, false, false, true, true],
+  },
+  {
+    id: "drone-repair",
+    icon: "🛸",
+    label: "Drone capsule",
+    objective: "Repair the damaged byte. Locked sockets stay fixed while you patch the loose ones.",
+    modeLabel: "Repair byte",
+    targetLabel: "Drone checksum",
+    statusHint: "The locked bits are stable. Fix only the loose sockets to restore the drone capsule.",
+    successLine: "Drone capsule repaired. One byte can hold a precise pattern, not just full power.",
+    targetBits: [false, true, true, false, true, false, true, false],
+    initialBits: [false, false, false, false, true, true, true, false],
+    lockedBits: [true, false, false, true, true, false, true, true],
+  },
+  {
+    id: "dock-repair",
+    icon: "🔧",
+    label: "Dock capsule",
+    objective: "Repair the damaged byte. Locked sockets stay fixed while you patch the loose ones.",
+    modeLabel: "Repair byte",
+    targetLabel: "Dock checksum",
+    statusHint: "The locked bits are stable. Fix only the loose sockets to restore the dock capsule.",
+    successLine: "Dock capsule repaired. One byte can hold a precise pattern, not just full power.",
+    targetBits: [true, true, false, false, true, false, true, true],
+    initialBits: [true, false, false, true, false, false, true, false],
+    lockedBits: [true, false, true, false, false, true, true, false],
   },
 ];
 
@@ -78,11 +136,17 @@ function isChallengeSolved(challenge: CapsuleChallenge, cells: boolean[]) {
 }
 
 export default function ByteForgeGame({ onComplete, accent }: Props) {
+  const { userId } = useUser();
+  const [challenges] = useState(() => [
+    CHARGE_CHALLENGE,
+    pickWithSeed(BADGE_CHALLENGE_OPTIONS, `${userId}:byte-forge:badge`),
+    pickWithSeed(REPAIR_CHALLENGE_OPTIONS, `${userId}:byte-forge:repair`),
+  ]);
   const [round, setRound] = useState(0);
-  const [cells, setCells] = useState<boolean[]>(() => cloneBits(CHALLENGES[0].initialBits));
+  const [cells, setCells] = useState<boolean[]>(() => cloneBits(challenges[0].initialBits));
   const [phase, setPhase] = useState<"charging" | "sealed" | "done">("charging");
 
-  const challenge = CHALLENGES[round];
+  const challenge = challenges[round];
   const activeCount = cells.filter(Boolean).length;
   const matchedCount = cells.reduce(
     (count, cell, index) => count + Number(cell === challenge.targetBits[index]),
@@ -92,16 +156,16 @@ export default function ByteForgeGame({ onComplete, accent }: Props) {
   const targetPattern = useMemo(() => formatPattern(challenge.targetBits), [challenge.targetBits]);
 
   const advanceRound = useCallback(() => {
-    if (round === CHALLENGES.length - 1) {
+    if (round === challenges.length - 1) {
       setPhase("done");
       return;
     }
 
     const nextRound = round + 1;
     setRound(nextRound);
-    setCells(cloneBits(CHALLENGES[nextRound].initialBits));
+    setCells(cloneBits(challenges[nextRound].initialBits));
     setPhase("charging");
-  }, [round]);
+  }, [challenges, round]);
 
   const toggleCell = useCallback(
     (index: number) => {
@@ -154,9 +218,7 @@ export default function ByteForgeGame({ onComplete, accent }: Props) {
       <div className="lab-panel">
         <div className="lab-panel-header">
           <span className="lab-room">System Room</span>
-          <span className="lab-step">
-            Capsule {round + 1} of {CHALLENGES.length}
-          </span>
+          <span className="lab-step">Capsule {round + 1} of {challenges.length}</span>
         </div>
         <h2 className="lab-title">Byte Forge</h2>
         <p className="lab-copy">{challenge.objective}</p>

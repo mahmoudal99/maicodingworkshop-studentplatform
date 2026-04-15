@@ -154,3 +154,14 @@ export async function upsertClassLeaderboardEntry(input: {
     entries: state.entries,
   };
 }
+
+export async function deleteClassLeaderboardEntry(userId: string) {
+  const state = await readState();
+  state.entries = state.entries.filter((entry) => entry.userId !== userId);
+  await writeState(state);
+
+  return {
+    seasonId: state.seasonId,
+    entries: sortEntries(state.entries),
+  };
+}

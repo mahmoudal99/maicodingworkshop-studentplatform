@@ -113,7 +113,7 @@ export const WEEKS_A: WeekData[] = [
           "Byte Forge",
           "Signal Tunnel",
           "Memory Vault",
-          "Literal Bot Test",
+          "Robot Command Bay",
           "Launch the Lab"
         ]
       }

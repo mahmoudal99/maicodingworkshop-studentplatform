@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getClassLeaderboard,
+  deleteClassLeaderboardEntry,
   upsertClassLeaderboardEntry,
 } from "@/lib/class-leaderboard";
 
@@ -51,5 +52,34 @@ export async function POST(request: Request) {
     currentWeek: body.currentWeek,
   });
 
+  return NextResponse.json(leaderboard);
+}
+
+export async function DELETE(request: Request) {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword) {
+    return NextResponse.json({ error: "Admin not configured" }, { status: 500 });
+  }
+
+  let body: {
+    password?: string;
+    userId?: string;
+  };
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  if (body.password !== adminPassword) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!body.userId || typeof body.userId !== "string") {
+    return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
+  }
+
+  const leaderboard = await deleteClassLeaderboardEntry(body.userId);
   return NextResponse.json(leaderboard);
 }

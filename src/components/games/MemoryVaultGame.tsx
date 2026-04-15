@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import GameScene from "@/components/game/GameScene";
 import { useCompanion } from "@/lib/game/use-companion";
 import { useDrag } from "@/lib/game/use-drag";
+import { sampleWithSeed, shuffleWithSeed } from "@/lib/game/randomize";
 import { useGameMeta } from "@/lib/game/use-game-meta";
 import { useParticles } from "@/lib/game/use-particles";
 import { useSound } from "@/lib/game/use-sound";
@@ -70,7 +71,7 @@ const MEMORY_ITEMS: MemoryItem[] = [
 ];
 
 export default function MemoryVaultGame({ onComplete, accent }: Props) {
-  const { userName } = useUser();
+  const { userId, userName } = useUser();
   const {
     character: byteCharacter,
     dialogue: byteDialogue,
@@ -87,9 +88,12 @@ export default function MemoryVaultGame({ onComplete, accent }: Props) {
   } = useCompanion("echo");
   const { playCorrect, playWrong, playCombo, playDrop, playPulse } = useSound();
   const { containerRef, burst } = useParticles();
-  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(MEMORY_ITEMS.length);
+  const [sessionItems] = useState(() =>
+    shuffleWithSeed(sampleWithSeed(MEMORY_ITEMS, 5, `${userId}:memory-vault:set`), `${userId}:memory-vault:order`)
+  );
+  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(sessionItems.length);
 
-  const [queue, setQueue] = useState(MEMORY_ITEMS);
+  const [queue, setQueue] = useState(sessionItems);
   const [ramItems, setRamItems] = useState<MemoryItem[]>([]);
   const [storageItems, setStorageItems] = useState<MemoryItem[]>([]);
   const [statusText, setStatusText] = useState(
@@ -210,7 +214,7 @@ export default function MemoryVaultGame({ onComplete, accent }: Props) {
   return (
     <GameScene
       accent={accent}
-      header={{ room: "Memory Vault", step: `${ramItems.length + storageItems.length} of ${MEMORY_ITEMS.length} files sorted` }}
+      header={{ room: "Memory Vault", step: `${ramItems.length + storageItems.length} of ${sessionItems.length} files sorted` }}
       missionTitle="Memory Sorting Vault"
       missionObjective="Sort live files into active memory or storage, then cut power to see what survives."
       subtitle="Power-off is the lesson: RAM clears while storage stays."

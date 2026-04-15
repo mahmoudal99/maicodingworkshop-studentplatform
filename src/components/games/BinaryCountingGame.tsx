@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import GameScene from "@/components/game/GameScene";
 import { useCompanion } from "@/lib/game/use-companion";
+import { pickWithSeed } from "@/lib/game/randomize";
 import { useGameMeta } from "@/lib/game/use-game-meta";
 import { useParticles } from "@/lib/game/use-particles";
 import { useSound } from "@/lib/game/use-sound";
@@ -14,14 +15,18 @@ interface Props {
 }
 
 const POWERS = [16, 8, 4, 2, 1];
-const TARGETS = [5, 13, 22];
+const TARGET_POOLS = [
+  [5, 6, 9, 10, 12],
+  [11, 13, 14, 18, 19],
+  [21, 22, 25, 26, 28],
+];
 
 function freshBits() {
   return POWERS.map(() => false);
 }
 
 export default function BinaryCountingGame({ onComplete, accent }: Props) {
-  const { userName } = useUser();
+  const { userId, userName } = useUser();
   const {
     character: byteCharacter,
     dialogue: byteDialogue,
@@ -38,7 +43,10 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
   } = useCompanion("echo");
   const { playTap, playCorrect, playWrong, playCombo, playComplete } = useSound();
   const { containerRef, burst } = useParticles();
-  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(TARGETS.length);
+  const [targets] = useState(() =>
+    TARGET_POOLS.map((pool, index) => pickWithSeed(pool, `${userId}:binary-door:${index}`))
+  );
+  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(targets.length);
 
   const [round, setRound] = useState(0);
   const [bits, setBits] = useState<boolean[]>(freshBits);
@@ -51,7 +59,7 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
   const [outputPulse, setOutputPulse] = useState(false);
   const [overloaded, setOverloaded] = useState(false);
 
-  const target = TARGETS[round];
+  const target = targets[round];
   const currentValue = bits.reduce((sum, active, index) => sum + (active ? POWERS[index] : 0), 0);
   const bitString = bits.map((bit) => (bit ? "1" : "0")).join("");
   const doorState =
@@ -86,7 +94,7 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
         }
       }, 1020),
       window.setTimeout(() => {
-        if (round === TARGETS.length - 1) {
+        if (round === targets.length - 1) {
           setPhase("complete");
           setStatusText("All binary doors are online. The corridor is stable again.");
           byteCelebrate(`${userName || "Engineer"}, every lock is open!`);
@@ -109,7 +117,7 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
     return () => {
       timers.forEach((timer) => window.clearTimeout(timer));
     };
-  }, [accent, burst, byteCelebrate, byteSay, containerRef, echoSay, phase, playComplete, round, userName]);
+  }, [accent, burst, byteCelebrate, byteSay, containerRef, echoSay, phase, playComplete, round, targets.length, userName]);
 
   function handleToggle(index: number) {
     if (phase !== "ready") return;
@@ -167,7 +175,7 @@ export default function BinaryCountingGame({ onComplete, accent }: Props) {
   return (
     <GameScene
       accent={accent}
-      header={{ room: "Bit Reactor Corridor", step: `Door ${round + 1} of ${TARGETS.length}` }}
+      header={{ room: "Bit Reactor Corridor", step: `Door ${round + 1} of ${targets.length}` }}
       missionTitle="Binary Door System"
       missionObjective="Flip the right bit switches to match the lock code and open the corridor."
       subtitle="Each switch adds value to the lock. Match the number to open it."

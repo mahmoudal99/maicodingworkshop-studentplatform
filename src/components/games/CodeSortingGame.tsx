@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import GameScene from "@/components/game/GameScene";
 import FbxAssetStage from "@/components/game/FbxAssetStage";
 import { useCompanion } from "@/lib/game/use-companion";
+import { shuffleWithSeed } from "@/lib/game/randomize";
 import { useGameMeta } from "@/lib/game/use-game-meta";
 import { useParticles } from "@/lib/game/use-particles";
 import { useSound } from "@/lib/game/use-sound";
@@ -202,7 +203,7 @@ function directionRotation(dir: Direction) {
 }
 
 export default function CodeSortingGame({ onComplete, accent }: Props) {
-  const { userName } = useUser();
+  const { userId, userName } = useUser();
   const {
     character: byteCharacter,
     dialogue: byteDialogue,
@@ -219,19 +220,20 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
   } = useCompanion("echo");
   const { playTap, playCorrect, playWrong, playCombo, playComplete, playPulse } = useSound();
   const { containerRef, burst } = useParticles();
-  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(MISSIONS.length);
+  const [missions] = useState(() => shuffleWithSeed(MISSIONS, `${userId}:spaceship-command:routes`));
+  const { stability, combo, recordCorrect, recordWrong } = useGameMeta(missions.length);
   const comboRef = useRef(combo);
 
   const [round, setRound] = useState(0);
   const [queue, setQueue] = useState<CommandId[]>([]);
-  const [ship, setShip] = useState<Position>(MISSIONS[0].start);
-  const [trail, setTrail] = useState<string[]>([cellKey(MISSIONS[0].start)]);
+  const [ship, setShip] = useState<Position>(missions[0].start);
+  const [trail, setTrail] = useState<string[]>([cellKey(missions[0].start)]);
   const [phase, setPhase] = useState<"planning" | "running" | "complete">("planning");
   const [activeCommandIndex, setActiveCommandIndex] = useState<number | null>(null);
-  const [statusText, setStatusText] = useState(MISSIONS[0].introLine);
+  const [statusText, setStatusText] = useState(missions[0].introLine);
   const [crashPoint, setCrashPoint] = useState<GridPoint | null>(null);
 
-  const mission = MISSIONS[round];
+  const mission = missions[round];
   const obstacleSet = useMemo(() => new Set(mission.obstacles.map(cellKey)), [mission]);
   const reachedGoal = ship.x === mission.goal.x && ship.y === mission.goal.y;
 
@@ -350,7 +352,7 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
           }
 
           timer = window.setTimeout(() => {
-            if (round === MISSIONS.length - 1) {
+            if (round === missions.length - 1) {
               setPhase("complete");
               setActiveCommandIndex(null);
               setStatusText("All flight paths repaired. The navigation grid is stable again.");
@@ -358,7 +360,7 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
             }
 
             const nextRound = round + 1;
-            const nextMission = MISSIONS[nextRound];
+            const nextMission = missions[nextRound];
             setRound(nextRound);
             setQueue([]);
             setShip(nextMission.start);
@@ -461,7 +463,7 @@ export default function CodeSortingGame({ onComplete, accent }: Props) {
       <GameScene
         layout="birdseye"
         accent={accent}
-        header={{ room: "Navigation Deck", step: `Route ${round + 1} of ${MISSIONS.length}` }}
+        header={{ room: "Navigation Deck", step: `Route ${round + 1} of ${missions.length}` }}
         missionTitle="Spaceship Command Game"
         missionObjective={mission.objective}
         subtitle="Build the flight plan, then watch the ship obey it step by step."
